@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,7 +7,7 @@ namespace TheBleedingDeacons.Unity.Models
     /// <summary>
     /// Converts JSON string values to <see cref="DateTime?"/>, treating empty
     /// strings as <c>null</c> instead of throwing a deserialization error.
-    /// 
+    ///
     /// The Unity API returns <c>""</c> for the <c>updated</c> field when a
     /// post has no modification timestamp. System.Text.Json cannot convert an
     /// empty string to <see cref="DateTime?"/> by default, so this converter
@@ -47,7 +47,7 @@ namespace TheBleedingDeacons.Unity.Models
         {
             if (value.HasValue)
             {
-                writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'"));
+                writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", System.Globalization.CultureInfo.InvariantCulture));
             }
             else
             {

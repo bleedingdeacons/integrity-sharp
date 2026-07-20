@@ -1,0 +1,91 @@
+root = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+tab_width = 4
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+
+# Modern placement — usings outside the namespace (also disables the SA1200 conflict).
+csharp_using_directive_placement = outside_namespace:warning
+
+# Missing XML doc comment. The Client project sets GenerateDocumentationFile,
+# which turns this on, but we do not require every public member to be
+# documented (StyleCop's SA1600 family is likewise disabled below). Silenced so
+# `dotnet format --verify-no-changes` does not treat it as a pending fix.
+dotnet_diagnostic.CS1591.severity = none
+
+# ---------------------------------------------------------------------------
+# StyleCop.Analyzers — disabled rules
+#
+# These conflict with the established house style or have no meaningful
+# auto-fix, so `dotnet format` should not churn the code to satisfy them.
+# Everything NOT listed here stays at its default (warning) so dotnet format
+# fixes it (indentation via tabs, blank lines, spacing, etc.).
+# ---------------------------------------------------------------------------
+
+# 'this.' prefix is not used
+dotnet_diagnostic.SA1101.severity = none
+# usings live outside the namespace (see placement above)
+dotnet_diagnostic.SA1200.severity = none
+# #region / #endregion are used intentionally
+dotnet_diagnostic.SA1124.severity = none
+# private fields are prefixed with an underscore
+dotnet_diagnostic.SA1309.severity = none
+# single-line statements without braces are allowed
+dotnet_diagnostic.SA1503.severity = none
+dotnet_diagnostic.SA1519.severity = none
+dotnet_diagnostic.SA1520.severity = none
+# don't reflow parameter / generic-constraint layout
+dotnet_diagnostic.SA1116.severity = none
+dotnet_diagnostic.SA1117.severity = none
+dotnet_diagnostic.SA1127.severity = none
+# don't reorder members
+dotnet_diagnostic.SA1201.severity = none
+dotnet_diagnostic.SA1202.severity = none
+dotnet_diagnostic.SA1203.severity = none
+dotnet_diagnostic.SA1204.severity = none
+dotnet_diagnostic.SA1214.severity = none
+# trailing-comma preference
+dotnet_diagnostic.SA1413.severity = none
+# 'required' modifier order — StyleCop 1.1.118 predates the C# 'required'
+# keyword and wrongly wants it before 'public'; the correct order is
+# 'public required'.
+dotnet_diagnostic.SA1206.severity = none
+# collection-expression bracket spacing
+dotnet_diagnostic.SA1010.severity = none
+# file headers
+dotnet_diagnostic.SA1633.severity = none
+# XML-doc analysis disabled note
+dotnet_diagnostic.SA0001.severity = none
+# documentation presence / wording (no meaningful auto-fix)
+dotnet_diagnostic.SA1600.severity = none
+dotnet_diagnostic.SA1601.severity = none
+dotnet_diagnostic.SA1602.severity = none
+dotnet_diagnostic.SA1611.severity = none
+dotnet_diagnostic.SA1614.severity = none
+dotnet_diagnostic.SA1615.severity = none
+dotnet_diagnostic.SA1618.severity = none
+dotnet_diagnostic.SA1623.severity = none
+dotnet_diagnostic.SA1629.severity = none
+dotnet_diagnostic.SA1642.severity = none
+
+# ---------------------------------------------------------------------------
+# Meziantou.Analyzer — disabled rules (no auto-fix / not applicable here)
+# ---------------------------------------------------------------------------
+
+# prefer returning a collection abstraction
+dotnet_diagnostic.MA0016.severity = none
+# method is too long
+dotnet_diagnostic.MA0051.severity = none
+
+[*.{csproj,props,targets}]
+indent_style = space
+indent_size = 2
+
+[*.{yml,yaml,json,md}]
+indent_style = space
+indent_size = 2

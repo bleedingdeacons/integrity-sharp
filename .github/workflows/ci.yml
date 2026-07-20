@@ -31,6 +31,16 @@ jobs:
       - name: Build library solution
         run: dotnet build TheBleedingDeacons.Unity.Client.sln --configuration Release --no-restore
 
+      # Enforce formatting and the StyleCop / Meziantou analyzers (configured in
+      # .editorconfig) across all three targets. Fails the build if `dotnet
+      # format` would change anything. Run before the tests so a formatting
+      # regression is reported up front.
+      - name: Verify formatting (dotnet format --verify-no-changes)
+        run: |
+          dotnet format TheBleedingDeacons.Unity.Client.sln --verify-no-changes
+          dotnet format TheBleedingDeacons.Unity.Tests/TheBleedingDeacons.Unity.Tests.csproj --verify-no-changes
+          dotnet format example/Integrity-cli/Integrity-cli.sln --verify-no-changes
+
       # The test project is not part of any solution, so it is built and run
       # explicitly. It project-references Client + Models, so this also builds them.
       - name: Test

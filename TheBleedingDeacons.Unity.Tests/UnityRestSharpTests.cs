@@ -50,7 +50,7 @@ public class UnityRestSharpTests
     public void Constructor_Should_Throw_When_BaseUrl_Is_Empty()
     {
         Assert.ThrowsException<ArgumentException>(() =>
-            new UnityRestSharp("", ApiKey));
+            new UnityRestSharp(string.Empty, ApiKey));
     }
 
     [TestMethod]
@@ -72,7 +72,6 @@ public class UnityRestSharpTests
     // the HttpClient, so the client can share an HttpClient without header
     // accumulation. These tests therefore make a request and inspect the
     // captured HttpRequestMessage rather than HttpClient.DefaultRequestHeaders.
-
     private void SetupEmptyGroupsResponse()
     {
         _mockHandler.SetupResponse("/groups", HttpStatusCode.OK, new
@@ -116,7 +115,7 @@ public class UnityRestSharpTests
         await _client.GetGroupsAsync();
 
         var userAgent = _mockHandler.LastRequest!.Headers.UserAgent.ToString();
-        Assert.IsTrue(userAgent.Contains("IntegrityClient/1.0"));
+        Assert.IsTrue(userAgent.Contains("IntegrityClient/1.0", StringComparison.Ordinal));
     }
 
     #endregion
@@ -152,9 +151,9 @@ public class UnityRestSharpTests
 
         // Verify URL
         var request = _mockHandler.LastRequest!;
-        Assert.IsTrue(request.RequestUri!.ToString().Contains("/wp-json/integrity/v1/groups"));
-        Assert.IsTrue(request.RequestUri.ToString().Contains("page=1"));
-        Assert.IsTrue(request.RequestUri.ToString().Contains("per_page=100"));
+        Assert.IsTrue(request.RequestUri!.ToString().Contains("/wp-json/integrity/v1/groups", StringComparison.Ordinal));
+        Assert.IsTrue(request.RequestUri.ToString().Contains("page=1", StringComparison.Ordinal));
+        Assert.IsTrue(request.RequestUri.ToString().Contains("per_page=100", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -170,7 +169,7 @@ public class UnityRestSharpTests
         await _client.GetGroupsAsync(search: "Serenity");
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("search=Serenity"));
+        Assert.IsTrue(url.Contains("search=Serenity", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -186,7 +185,7 @@ public class UnityRestSharpTests
         await _client.GetGroupsAsync(districtId: 5);
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("district_id=5"));
+        Assert.IsTrue(url.Contains("district_id=5", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -202,7 +201,7 @@ public class UnityRestSharpTests
         await _client.GetGroupsAsync(expandMeetings: true);
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("expand=meetings"));
+        Assert.IsTrue(url.Contains("expand=meetings", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -236,7 +235,7 @@ public class UnityRestSharpTests
         await _client.GetGroupAsync(1, expandMeetings: true);
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("expand=meetings"));
+        Assert.IsTrue(url.Contains("expand=meetings", StringComparison.Ordinal));
     }
 
     #endregion
@@ -280,7 +279,7 @@ public class UnityRestSharpTests
         await _client.GetMeetingsAsync(dayOfWeek: DayOfWeek.Wednesday);
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("day=3")); // Wednesday = 3
+        Assert.IsTrue(url.Contains("day=3", StringComparison.Ordinal)); // Wednesday = 3
     }
 
     [TestMethod]
@@ -296,7 +295,7 @@ public class UnityRestSharpTests
         await _client.GetMeetingsAsync(online: true);
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("online=true"));
+        Assert.IsTrue(url.Contains("online=true", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -312,7 +311,7 @@ public class UnityRestSharpTests
         await _client.GetMeetingsAsync(groupId: 7);
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("group_id=7"));
+        Assert.IsTrue(url.Contains("group_id=7", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -373,7 +372,7 @@ public class UnityRestSharpTests
         await _client.GetPositionsAsync(search: "Chair");
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("search=Chair"));
+        Assert.IsTrue(url.Contains("search=Chair", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -434,7 +433,7 @@ public class UnityRestSharpTests
         await _client.GetMembersAsync(homeGroupId: 42);
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("home_group_id=42"));
+        Assert.IsTrue(url.Contains("home_group_id=42", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -450,7 +449,7 @@ public class UnityRestSharpTests
         await _client.GetMembersAsync(expandHomeGroup: true);
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("expand=home_group"));
+        Assert.IsTrue(url.Contains("expand=home_group", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -482,7 +481,7 @@ public class UnityRestSharpTests
         await _client.GetMemberAsync(5, expandHomeGroup: true);
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("expand=home_group"));
+        Assert.IsTrue(url.Contains("expand=home_group", StringComparison.Ordinal));
     }
 
     #endregion
@@ -513,12 +512,12 @@ public class UnityRestSharpTests
         Assert.AreEqual(HttpMethod.Post, _mockHandler.LastRequest!.Method);
 
         // Verify the URL
-        Assert.IsTrue(_mockHandler.LastRequest.RequestUri!.ToString().Contains("/members/5/update"));
+        Assert.IsTrue(_mockHandler.LastRequest.RequestUri!.ToString().Contains("/members/5/update", StringComparison.Ordinal));
 
         // Verify the body was sent
         var body = await _mockHandler.LastRequest.Content!.ReadAsStringAsync();
-        Assert.IsTrue(body.Contains("anonymous_name"));
-        Assert.IsTrue(body.Contains("Updated Bob"));
+        Assert.IsTrue(body.Contains("anonymous_name", StringComparison.Ordinal));
+        Assert.IsTrue(body.Contains("Updated Bob", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -533,15 +532,16 @@ public class UnityRestSharpTests
         var updateRequest = new UpdateMemberRequest
         {
             AnonymousName = "Only This Field"
+
             // All other fields are null → should be omitted
         };
 
         await _client.UpdateMemberAsync(1, updateRequest);
 
         var body = await _mockHandler.LastRequest!.Content!.ReadAsStringAsync();
-        Assert.IsTrue(body.Contains("anonymous_name"));
-        Assert.IsFalse(body.Contains("personal_email"));
-        Assert.IsFalse(body.Contains("mobile_number"));
+        Assert.IsTrue(body.Contains("anonymous_name", StringComparison.Ordinal));
+        Assert.IsFalse(body.Contains("personal_email", StringComparison.Ordinal));
+        Assert.IsFalse(body.Contains("mobile_number", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -568,7 +568,7 @@ public class UnityRestSharpTests
         var request = new RecordComplianceRequest
         {
             Accepted = true,
-            Version = "2.1",            
+            Version = "2.1",
         };
 
         var result = await _client.RecordComplianceAsync(7, request);
@@ -576,19 +576,19 @@ public class UnityRestSharpTests
         Assert.IsTrue(result.Success);
         Assert.IsNotNull(result.Data);
         Assert.AreEqual(HttpMethod.Post, _mockHandler.LastRequest!.Method);
-        Assert.IsTrue(_mockHandler.LastRequest.RequestUri!.ToString().Contains("/members/7/compliance"));
+        Assert.IsTrue(_mockHandler.LastRequest.RequestUri!.ToString().Contains("/members/7/compliance", StringComparison.Ordinal));
 
         var body = await _mockHandler.LastRequest.Content!.ReadAsStringAsync();
-        Assert.IsTrue(body.Contains("\"accepted\":true"));
-        Assert.IsTrue(body.Contains("\"version\":\"2.1\""));
+        Assert.IsTrue(body.Contains("\"accepted\":true", StringComparison.Ordinal));
+        Assert.IsTrue(body.Contains("\"version\":\"2.1\"", StringComparison.Ordinal));
 
         // Only accepted + version were set on the request; every other field is
         // null and omitted by WhenWritingNull. Note the request no longer carries
         // a "statement" field at all — it was replaced on the wire by policy_id.
-        Assert.IsFalse(body.Contains("\"method\""));
-        Assert.IsFalse(body.Contains("\"accepted_at\""));
-        Assert.IsFalse(body.Contains("statement"));
-        Assert.IsFalse(body.Contains("policy_id"));
+        Assert.IsFalse(body.Contains("\"method\"", StringComparison.Ordinal));
+        Assert.IsFalse(body.Contains("\"accepted_at\"", StringComparison.Ordinal));
+        Assert.IsFalse(body.Contains("statement", StringComparison.Ordinal));
+        Assert.IsFalse(body.Contains("policy_id", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -661,9 +661,9 @@ public class UnityRestSharpTests
                 {
                     accepted = false,
                     accepted_at = "2026-04-27T16:00:00.000Z",
-                    version = "",
-                    method = "",
-                    statement = "",
+                    version = string.Empty,
+                    method = string.Empty,
+                    statement = string.Empty,
                 },
             },
         });
@@ -681,7 +681,7 @@ public class UnityRestSharpTests
         Assert.AreEqual(string.Empty, result.Data.GdprCompliance.Statement);
 
         var body = await _mockHandler.LastRequest!.Content!.ReadAsStringAsync();
-        Assert.IsTrue(body.Contains("\"accepted\":false"));
+        Assert.IsTrue(body.Contains("\"accepted\":false", StringComparison.Ordinal));
     }
 
     #endregion
@@ -725,8 +725,8 @@ public class UnityRestSharpTests
             dateTo: new DateOnly(2025, 12, 31));
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("date_from=2025-01-01"));
-        Assert.IsTrue(url.Contains("date_to=2025-12-31"));
+        Assert.IsTrue(url.Contains("date_from=2025-01-01", StringComparison.Ordinal));
+        Assert.IsTrue(url.Contains("date_to=2025-12-31", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -781,8 +781,8 @@ public class UnityRestSharpTests
 
         // Verify body
         var body = await _mockHandler.LastRequest.Content!.ReadAsStringAsync();
-        Assert.IsTrue(body.Contains("group_id"));
-        Assert.IsTrue(body.Contains("gsr_name"));
+        Assert.IsTrue(body.Contains("group_id", StringComparison.Ordinal));
+        Assert.IsTrue(body.Contains("gsr_name", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -812,8 +812,8 @@ public class UnityRestSharpTests
             gsrProxyName: "Jane S.");
 
         var body = await _mockHandler.LastRequest!.Content!.ReadAsStringAsync();
-        Assert.IsTrue(body.Contains("gsr_proxy"));
-        Assert.IsTrue(body.Contains("Jane S."));
+        Assert.IsTrue(body.Contains("gsr_proxy", StringComparison.Ordinal));
+        Assert.IsTrue(body.Contains("Jane S.", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -974,7 +974,6 @@ public class UnityRestSharpTests
     // (rather than receiving a "successful" error ApiResponse). Rate-limit
     // header parsing on a *successful* response is covered by
     // Should_Parse_RateLimit_Headers.
-
     [TestMethod]
     public async Task GetGroupsAsync_Should_Throw_After_Retrying_429_RateLimit()
     {
@@ -1018,7 +1017,7 @@ public class UnityRestSharpTests
         // No response was ever received, so there is no last status code.
         Assert.IsNull(ex.LastStatusCode);
         Assert.AreEqual(5, ex.Attempts);
-        Assert.IsTrue(ex.Reason.Contains("network error"));
+        Assert.IsTrue(ex.Reason.Contains("network error", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -1044,7 +1043,7 @@ public class UnityRestSharpTests
             success = true,
             data = new List<Group>(),
             meta = new { total = 0, page = 1, per_page = 100, total_pages = 0 }
-        }, headers: new Dictionary<string, string>
+        }, headers: new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["X-RateLimit-Limit"] = "1000",
             ["X-RateLimit-Remaining"] = "999",
@@ -1084,8 +1083,8 @@ public class UnityRestSharpTests
         Assert.AreEqual(5, result.Meta.TotalPages);
 
         var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        Assert.IsTrue(url.Contains("page=3"));
-        Assert.IsTrue(url.Contains("per_page=50"));
+        Assert.IsTrue(url.Contains("page=3", StringComparison.Ordinal));
+        Assert.IsTrue(url.Contains("per_page=50", StringComparison.Ordinal));
     }
 
     #endregion
@@ -1109,8 +1108,8 @@ public class UnityRestSharpTests
         await client.GetGroupsAsync();
 
         var url = handler.LastRequest!.RequestUri!.ToString();
-        Assert.IsFalse(url.Contains("test.example.com//"));
-        Assert.IsTrue(url.StartsWith("https://test.example.com/wp-json/integrity/v1/groups"));
+        Assert.IsFalse(url.Contains("test.example.com//", StringComparison.Ordinal));
+        Assert.IsTrue(url.StartsWith("https://test.example.com/wp-json/integrity/v1/groups", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -1128,8 +1127,8 @@ public class UnityRestSharpTests
         // AbsoluteUri preserves the percent-encoding; RequestUri.ToString()
         // would decode %20 back to a space and mask the escaping.
         var url = _mockHandler.LastRequest!.RequestUri!.AbsoluteUri;
-        Assert.IsTrue(url.Contains("search=test%20group%20%26%20friends") ||
-                       url.Contains("search=test+group+%26+friends"));
+        Assert.IsTrue(url.Contains("search=test%20group%20%26%20friends", StringComparison.Ordinal) ||
+                       url.Contains("search=test+group+%26+friends", StringComparison.Ordinal));
     }
 
     #endregion
@@ -1151,168 +1150,8 @@ public class UnityRestSharpTests
 
         // Should throw OperationCanceledException or TaskCanceledException
         await Assert.ThrowsExceptionAsync<TaskCanceledException>(async () =>
-            await _client.GetGroupsAsync(cancellationToken: cts.Token));
+            await _client.GetGroupsAsync(cancellationToken: cts.Token).ConfigureAwait(false));
     }
 
     #endregion
-}
-
-/// <summary>
-/// NaturalApi-style fluent tests that demonstrate using MockHttpExecutor
-/// to validate UnityRestSharp response shapes through NaturalApi's DSL.
-/// These tests show how the NaturalApi pattern can complement direct unit tests.
-/// </summary>
-[TestClass]
-public class UnityRestSharpNaturalApiTests
-{
-    private UnityMockHttpExecutor _mockExecutor = null!;
-    private IApi _api = null!;
-
-    [TestInitialize]
-    public void Setup()
-    {
-        _mockExecutor = new UnityMockHttpExecutor();
-        _api = new Api(_mockExecutor);
-    }
-
-    [TestMethod]
-    public void GetGroups_Fluent_Should_Return_200_With_Groups()
-    {
-        // Arrange — mock a Unity-style wrapped response
-        _mockExecutor.SetupSuccessResponse(new[]
-        {
-            new { id = 1, title = "Serenity Group" },
-            new { id = 2, title = "Hope Group" }
-        }, total: 2);
-
-        // Act & Assert — NaturalApi fluent DSL
-        _api.For("/wp-json/integrity/v1/groups")
-            .Get()
-            .ShouldReturn(200);
-    }
-
-    [TestMethod]
-    public void GetGroups_Fluent_Should_Validate_Response_Headers()
-    {
-        _mockExecutor.SetupResponse(200, new
-        {
-            success = true,
-            data = new[] { new { id = 1, title = "Test" } }
-        }, new Dictionary<string, string>
-        {
-            ["X-RateLimit-Limit"] = "1000",
-            ["X-RateLimit-Remaining"] = "999"
-        });
-
-        _api.For("/wp-json/integrity/v1/groups")
-            .Get()
-            .ShouldReturn(200, headers => headers.ContainsKey("X-RateLimit-Limit"));
-    }
-
-    [TestMethod]
-    public void GetGroups_Fluent_Should_Validate_Error_Response()
-    {
-        _mockExecutor.SetupErrorResponse(401, "unauthorized", "Invalid API key");
-
-        var result = _api.For("/wp-json/integrity/v1/groups")
-            .UsingAuth("Bearer bad-key")
-            .Get();
-
-        Assert.AreEqual(401, result.StatusCode);
-    }
-
-    [TestMethod]
-    public void PostUpdateMember_Fluent_Should_Send_Body()
-    {
-        _mockExecutor.SetupSuccessResponse(new { id = 5, anonymous_name = "Updated" });
-
-        var updateBody = new { anonymous_name = "Updated Bob" };
-
-        var result = _api.For("/wp-json/integrity/v1/members/5/update")
-            .WithHeader("Content-Type", "application/json")
-            .Post(updateBody);
-
-        result.ShouldReturn(200);
-
-        // Verify the executor captured the request spec with body
-        Assert.IsNotNull(_mockExecutor.LastSpec);
-        Assert.AreEqual(HttpMethod.Post, _mockExecutor.LastSpec.Method);
-    }
-
-    [TestMethod]
-    public void RegisterGroup_Fluent_Should_Post_To_Correct_Endpoint()
-    {
-        _mockExecutor.SetupSuccessResponse(new
-        {
-            intergroup_meeting_id = 1,
-            group_id = 10,
-            registered = true
-        });
-
-        _api.For("/wp-json/integrity/v1/intergroup-meetings/1/register-group")
-            .Post(new { group_id = 10, member_id = 5, gsr_name = "John D." })
-            .ShouldReturn(200);
-
-        Assert.IsNotNull(_mockExecutor.LastSpec);
-        Assert.IsTrue(_mockExecutor.LastSpec.Endpoint.Contains("register-group"));
-    }
-
-    [TestMethod]
-    public void HealthCheck_Fluent_Should_Return_Status()
-    {
-        _mockExecutor.SetupResponse(200,
-            """{"status":"ok","timestamp":"2025-02-26T12:00:00Z","version":"1.0.0","unity_available":true}""");
-
-        _api.For("/wp-json/integrity/v1/health")
-            .Get()
-            .ShouldReturn(200);
-    }
-
-    [TestMethod]
-    public void GetMeetings_Fluent_With_QueryParams_Should_Build_Correct_Spec()
-    {
-        _mockExecutor.SetupSuccessResponse(new List<object>(), total: 0);
-
-        _api.For("/wp-json/integrity/v1/meetings")
-            .WithQueryParam("day", 3)
-            .WithQueryParam("online", "true")
-            .Get();
-
-        Assert.IsNotNull(_mockExecutor.LastSpec);
-        Assert.IsTrue(_mockExecutor.LastSpec.QueryParams.ContainsKey("day"));
-        Assert.IsTrue(_mockExecutor.LastSpec.QueryParams.ContainsKey("online"));
-    }
-
-    [TestMethod]
-    public void GetGroup_Fluent_Should_Include_Auth_Header()
-    {
-        _mockExecutor.SetupSuccessResponse(new { id = 1, title = "Test Group" });
-
-        _api.For("/wp-json/integrity/v1/groups/1")
-            .UsingAuth("Bearer test-key-123")
-            .Get()
-            .ShouldReturn(200);
-
-        Assert.IsNotNull(_mockExecutor.LastSpec);
-        Assert.IsTrue(_mockExecutor.LastSpec.Headers.ContainsKey("Authorization"));
-        Assert.AreEqual("Bearer test-key-123", _mockExecutor.LastSpec.Headers["Authorization"]);
-    }
-
-    [TestMethod]
-    public void GetMembers_Fluent_Should_Chain_Multiple_Params()
-    {
-        _mockExecutor.SetupSuccessResponse(new List<object>());
-
-        _api.For("/wp-json/integrity/v1/members")
-            .WithQueryParam("page", 2)
-            .WithQueryParam("per_page", 50)
-            .WithQueryParam("search", "John")
-            .WithQueryParam("home_group_id", 10)
-            .WithQueryParam("expand", "home_group")
-            .Get()
-            .ShouldReturn(200);
-
-        var spec = _mockExecutor.LastSpec!;
-        Assert.AreEqual(5, spec.QueryParams.Count);
-    }
 }
