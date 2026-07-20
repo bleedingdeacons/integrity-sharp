@@ -1,5 +1,7 @@
 # Integrity C# Client (`integrity-sharp`)
 
+[![CI](https://github.com/bleedingdeacons/integrity-sharp/actions/workflows/ci.yml/badge.svg)](https://github.com/bleedingdeacons/integrity-sharp/actions/workflows/ci.yml)
+
 A C# client library for the [Integrity](https://github.com/bleedingdeacons/integrity)
 WordPress REST API — secure, authenticated access to Unity intergroup Groups,
 Meetings and member data.

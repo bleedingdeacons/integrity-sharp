@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # 9.0.x builds the Client/Models/Tests projects; 10.0.x builds the
+          # example CLI (example/Integrity-cli targets net10.0).
+          dotnet-version: |
+            9.0.x
+            10.0.x
+
+      # The library solution (Client + Models). Restored and built in Release so
+      # the NuGet-packable Client project is validated the same way it ships.
+      - name: Restore library solution
+        run: dotnet restore TheBleedingDeacons.Unity.Client.sln
+
+      - name: Build library solution
+        run: dotnet build TheBleedingDeacons.Unity.Client.sln --configuration Release --no-restore
+
+      # The test project is not part of any solution, so it is built and run
+      # explicitly. It project-references Client + Models, so this also builds them.
+      - name: Test
+        run: dotnet test TheBleedingDeacons.Unity.Tests/TheBleedingDeacons.Unity.Tests.csproj --configuration Release --logger "console;verbosity=normal"
+
+      # The example CLI has its own solution and targets net10.0.
+      - name: Build example CLI
+        run: dotnet build example/Integrity-cli/Integrity-cli.sln --configuration Release
