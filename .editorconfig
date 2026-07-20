@@ -80,8 +80,6 @@ dotnet_diagnostic.SA1642.severity = none
 # Meziantou.Analyzer — disabled rules (no auto-fix / not applicable here)
 # ---------------------------------------------------------------------------
 
-# multiple types per file (the client + its DTOs are intentionally one file)
-dotnet_diagnostic.MA0048.severity = none
 # prefer returning a collection abstraction
 dotnet_diagnostic.MA0016.severity = none
 # method is too long
