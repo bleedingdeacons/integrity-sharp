@@ -1,24 +1,23 @@
-﻿// See https://aka.ms/new-console-template for more information
+// See https://aka.ms/new-console-template for more information
 using TheBleedingDeacons.Unity.Client;
 using TheBleedingDeacons.Unity.Models;
 
 Console.WriteLine("Integrity CLI");
 
-static string Fmt(DateTime? dt) => dt?.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'") ?? "";
+static string Fmt(DateTime? dt) => dt?.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
 
 using var client = new UnityRestSharp(
     "http://unity-dev.local/",
-    "int_920a465e8511933de0efd9bc85225c04febd4dc44a73dd829e63523ea89e127b"
-);
+    "int_920a465e8511933de0efd9bc85225c04febd4dc44a73dd829e63523ea89e127b");
 
 // Health Check
-var status = await client.CheckHealthAsync();
+var status = await client.CheckHealthAsync().ConfigureAwait(false);
 Console.WriteLine($"Health Check - Unity Available: {status?.UnityAvailable}");
 Console.WriteLine();
 
 // Groups
 Console.WriteLine("=== GROUPS ===");
-var groups = await client.GetGroupsAsync(expandMeetings: true);
+var groups = await client.GetGroupsAsync(expandMeetings: true).ConfigureAwait(false);
 Console.WriteLine($"Status Code: {groups.StatusCode}");
 if (groups.Success && groups.Data != null)
 {
@@ -40,11 +39,12 @@ else
 {
     Console.WriteLine($"Error: {groups.Error?.Code} - {groups.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // Online Meetings
 Console.WriteLine("=== ONLINE MEETINGS ===");
-var onlineMeetings = await client.GetMeetingsAsync(dayOfWeek: null, online: true);
+var onlineMeetings = await client.GetMeetingsAsync(dayOfWeek: null, online: true).ConfigureAwait(false);
 Console.WriteLine($"Status Code: {onlineMeetings.StatusCode}");
 if (onlineMeetings.Success && onlineMeetings.Data != null)
 {
@@ -65,11 +65,12 @@ else
 {
     Console.WriteLine($"Error: {onlineMeetings.Error?.Code} - {onlineMeetings.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // Sunday Meetings (with debug info)
 Console.WriteLine("=== SUNDAY MEETINGS ===");
-var sundayMeetings = await client.GetMeetingsAsync(dayOfWeek: DayOfWeek.Sunday);
+var sundayMeetings = await client.GetMeetingsAsync(dayOfWeek: DayOfWeek.Sunday).ConfigureAwait(false);
 Console.WriteLine($"Status Code: {sundayMeetings.StatusCode}");
 if (sundayMeetings.Success && sundayMeetings.Data != null)
 {
@@ -90,11 +91,12 @@ else
 {
     Console.WriteLine($"Error: {sundayMeetings.Error?.Code} - {sundayMeetings.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // Monday Meetings
 Console.WriteLine("=== MONDAY MEETINGS ===");
-var mondayMeetings = await client.GetMeetingsAsync(dayOfWeek: DayOfWeek.Monday);
+var mondayMeetings = await client.GetMeetingsAsync(dayOfWeek: DayOfWeek.Monday).ConfigureAwait(false);
 Console.WriteLine($"Status Code: {mondayMeetings.StatusCode}");
 if (mondayMeetings.Success && mondayMeetings.Data != null)
 {
@@ -115,11 +117,12 @@ else
 {
     Console.WriteLine($"Error: {mondayMeetings.Error?.Code} - {mondayMeetings.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // All Meetings
 Console.WriteLine("=== ALL MEETINGS ===");
-var allMeetings = await client.GetMeetingsAsync();
+var allMeetings = await client.GetMeetingsAsync().ConfigureAwait(false);
 Console.WriteLine($"Status Code: {allMeetings.StatusCode}");
 if (allMeetings.Success && allMeetings.Data != null)
 {
@@ -140,11 +143,12 @@ else
 {
     Console.WriteLine($"Error: {allMeetings.Error?.Code} - {allMeetings.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // Members
 Console.WriteLine("=== MEMBERS ===");
-var members = await client.GetMembersAsync();
+var members = await client.GetMembersAsync().ConfigureAwait(false);
 Console.WriteLine($"Status Code: {members.StatusCode}");
 if (members.Success && members.Data != null)
 {
@@ -158,11 +162,12 @@ else
 {
     Console.WriteLine($"Error: {members.Error?.Code} - {members.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // GSR Members Only
 Console.WriteLine("=== GSR MEMBERS ===");
-var gsrMembers = await client.GetMembersAsync();
+var gsrMembers = await client.GetMembersAsync().ConfigureAwait(false);
 Console.WriteLine($"Status Code: {gsrMembers.StatusCode}");
 if (gsrMembers.Success && gsrMembers.Data != null)
 {
@@ -177,11 +182,12 @@ else
 {
     Console.WriteLine($"Error: {gsrMembers.Error?.Code} - {gsrMembers.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // Members with Expanded Home Group
 Console.WriteLine("=== MEMBERS WITH EXPANDED HOME GROUP ===");
-var membersExpanded = await client.GetMembersAsync(expandHomeGroup: true);
+var membersExpanded = await client.GetMembersAsync(expandHomeGroup: true).ConfigureAwait(false);
 Console.WriteLine($"Status Code: {membersExpanded.StatusCode}");
 if (membersExpanded.Success && membersExpanded.Data != null)
 {
@@ -206,6 +212,7 @@ else
 {
     Console.WriteLine($"Error: {membersExpanded.Error?.Code} - {membersExpanded.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // Update Member
@@ -224,7 +231,7 @@ if (members.Success && members.Data?.Count > 0)
     var updateResult = await client.UpdateMemberAsync(targetMember.Id, new UpdateMemberRequest
     {
         AnonymousName = $"{originalName} (updated)"
-    });
+    }).ConfigureAwait(false);
     Console.WriteLine($"  Status Code: {updateResult.StatusCode}");
 
     if (updateResult.Success && updateResult.Data != null)
@@ -241,7 +248,7 @@ if (members.Success && members.Data?.Count > 0)
     // Verify by re-fetching
     Console.WriteLine();
     Console.WriteLine("  Verifying update...");
-    var verifyMember = await client.GetMemberAsync(targetMember.Id);
+    var verifyMember = await client.GetMemberAsync(targetMember.Id).ConfigureAwait(false);
     if (verifyMember.Success && verifyMember.Data != null)
     {
         Console.WriteLine($"  Fetched Name: {verifyMember.Data.AnonymousName}");
@@ -256,7 +263,7 @@ if (members.Success && members.Data?.Count > 0)
         AnonymousName = originalName,
         IsGsr = !originalGsr,
         ShowAnonymousName = true
-    });
+    }).ConfigureAwait(false);
     Console.WriteLine($"  Status Code: {multiUpdate.StatusCode}");
 
     if (multiUpdate.Success && multiUpdate.Data != null)
@@ -277,7 +284,7 @@ if (members.Success && members.Data?.Count > 0)
     var restoreResult = await client.UpdateMemberAsync(targetMember.Id, new UpdateMemberRequest
     {
         IsGsr = originalGsr
-    });
+    }).ConfigureAwait(false);
     Console.WriteLine($"  Status Code: {restoreResult.StatusCode}");
     if (restoreResult.Success && restoreResult.Data != null)
     {
@@ -295,7 +302,7 @@ if (members.Success && members.Data?.Count > 0)
     var invalidUpdate = await client.UpdateMemberAsync(targetMember.Id, new UpdateMemberRequest
     {
         HomeGroupId = 999999
-    });
+    }).ConfigureAwait(false);
     Console.WriteLine($"  Status Code: {invalidUpdate.StatusCode} (expected 422)");
     Console.WriteLine($"  Error: {invalidUpdate.Error?.Code} - {invalidUpdate.Error?.Message}");
 
@@ -305,7 +312,7 @@ if (members.Success && members.Data?.Count > 0)
     var notFoundUpdate = await client.UpdateMemberAsync(999999, new UpdateMemberRequest
     {
         AnonymousName = "Ghost"
-    });
+    }).ConfigureAwait(false);
     Console.WriteLine($"  Status Code: {notFoundUpdate.StatusCode} (expected 404)");
     Console.WriteLine($"  Error: {notFoundUpdate.Error?.Code} - {notFoundUpdate.Error?.Message}");
 }
@@ -313,11 +320,12 @@ else
 {
     Console.WriteLine("Skipped: requires members data");
 }
+
 Console.WriteLine();
 
 // Positions
 Console.WriteLine("=== POSITIONS ===");
-var positions = await client.GetPositionsAsync();
+var positions = await client.GetPositionsAsync().ConfigureAwait(false);
 Console.WriteLine($"Status Code: {positions.StatusCode}");
 if (positions.Success && positions.Data != null)
 {
@@ -331,6 +339,7 @@ else
 {
     Console.WriteLine($"Error: {positions.Error?.Code} - {positions.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // Create Member (GSR for a group)
@@ -347,7 +356,7 @@ if (groups.Success && groups.Data?.Count > 0)
         MobileNumber = "555-0100",
         HomeGroupId = targetGroup.Id,
         IsGsr = true,
-    });
+    }).ConfigureAwait(false);
     Console.WriteLine($"Status Code: {createGsrResult.StatusCode}");
 
     if (createGsrResult.Success && createGsrResult.Data != null)
@@ -364,7 +373,7 @@ if (groups.Success && groups.Data?.Count > 0)
         // Verify by re-fetching
         Console.WriteLine();
         Console.WriteLine("  Verifying created member...");
-        var verifyCreated = await client.GetMemberAsync(created.Id);
+        var verifyCreated = await client.GetMemberAsync(created.Id).ConfigureAwait(false);
         if (verifyCreated.Success && verifyCreated.Data != null)
         {
             Console.WriteLine($"  Fetched Name: {verifyCreated.Data.AnonymousName}");
@@ -386,6 +395,7 @@ else
 {
     Console.WriteLine("Skipped: requires groups data");
 }
+
 Console.WriteLine();
 
 // Create Member (Position Holder)
@@ -401,7 +411,7 @@ if (positions.Success && positions.Data?.Count > 0)
         PersonalEmail = "test.holder@example.com",
         MobileNumber = "555-0200",
         IntergroupPositionId = targetPosition.Id,
-    });
+    }).ConfigureAwait(false);
     Console.WriteLine($"Status Code: {createHolderResult.StatusCode}");
 
     if (createHolderResult.Success && createHolderResult.Data != null)
@@ -423,6 +433,7 @@ else
 {
     Console.WriteLine("Skipped: requires positions data");
 }
+
 Console.WriteLine();
 
 // Create Member - Validation Tests
@@ -434,7 +445,7 @@ var invalidGroupCreate = await client.CreateMemberAsync(new CreateMemberRequest
 {
     AnonymousName = "Bad Group Member",
     HomeGroupId = 999999,
-});
+}).ConfigureAwait(false);
 Console.WriteLine($"  Status Code: {invalidGroupCreate.StatusCode} (expected 422)");
 Console.WriteLine($"  Error: {invalidGroupCreate.Error?.Code} - {invalidGroupCreate.Error?.Message}");
 
@@ -445,14 +456,14 @@ var invalidPositionCreate = await client.CreateMemberAsync(new CreateMemberReque
 {
     AnonymousName = "Bad Position Member",
     IntergroupPositionId = 999999,
-});
+}).ConfigureAwait(false);
 Console.WriteLine($"  Status Code: {invalidPositionCreate.StatusCode} (expected 422)");
 Console.WriteLine($"  Error: {invalidPositionCreate.Error?.Code} - {invalidPositionCreate.Error?.Message}");
 Console.WriteLine();
 
 // Intergroup Meetings
 Console.WriteLine("=== INTERGROUP MEETINGS ===");
-var intergroupMeetings = await client.GetIntergroupMeetingsAsync();
+var intergroupMeetings = await client.GetIntergroupMeetingsAsync().ConfigureAwait(false);
 Console.WriteLine($"Status Code: {intergroupMeetings.StatusCode}");
 if (intergroupMeetings.Success && intergroupMeetings.Data != null)
 {
@@ -467,11 +478,13 @@ if (intergroupMeetings.Success && intergroupMeetings.Data != null)
             {
                 Console.WriteLine($"      - {attendee.Name}");
             }
+
             if (meeting.GroupAttendees.Count > 3)
             {
                 Console.WriteLine($"      ... and {meeting.GroupAttendees.Count - 3} more");
             }
         }
+
         if (meeting.OfficersAttending.Count > 0)
         {
             Console.WriteLine($"    Officers Attending:");
@@ -479,6 +492,7 @@ if (intergroupMeetings.Success && intergroupMeetings.Data != null)
             {
                 Console.WriteLine($"      - {officer.Name}");
             }
+
             if (meeting.OfficersAttending.Count > 3)
             {
                 Console.WriteLine($"      ... and {meeting.OfficersAttending.Count - 3} more");
@@ -490,14 +504,15 @@ else
 {
     Console.WriteLine($"Error: {intergroupMeetings.Error?.Code} - {intergroupMeetings.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // Intergroup Meetings with Date Filter - Past 90 days
 Console.WriteLine("=== INTERGROUP MEETINGS (LAST 90 DAYS) ===");
 var recentIntergroupMeetings = await client.GetIntergroupMeetingsAsync(
     dateFrom: DateOnly.FromDateTime(DateTime.Today.AddDays(-90)),
-    dateTo: DateOnly.FromDateTime(DateTime.Today)
-);
+    dateTo: DateOnly.FromDateTime(DateTime.Today))
+.ConfigureAwait(false);
 Console.WriteLine($"Status Code: {recentIntergroupMeetings.StatusCode}");
 if (recentIntergroupMeetings.Success && recentIntergroupMeetings.Data != null)
 {
@@ -511,14 +526,15 @@ else
 {
     Console.WriteLine($"Error: {recentIntergroupMeetings.Error?.Code} - {recentIntergroupMeetings.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // Intergroup Meetings - All future meetings (dateTo: null means no upper bound)
 Console.WriteLine("=== UPCOMING INTERGROUP MEETINGS ===");
 var upcomingIntergroupMeetings = await client.GetIntergroupMeetingsAsync(
     dateFrom: DateOnly.FromDateTime(DateTime.Today),
-    dateTo: null  // No upper date limit - gets all future meetings
-);
+    dateTo: null) // No upper date limit - gets all future meetings
+.ConfigureAwait(false);
 Console.WriteLine($"Status Code: {upcomingIntergroupMeetings.StatusCode}");
 if (upcomingIntergroupMeetings.Success && upcomingIntergroupMeetings.Data != null)
 {
@@ -532,6 +548,7 @@ else
 {
     Console.WriteLine($"Error: {upcomingIntergroupMeetings.Error?.Code} - {upcomingIntergroupMeetings.Error?.Message}");
 }
+
 Console.WriteLine();
 
 // Register Group for Intergroup Meeting
@@ -551,8 +568,8 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
         targetGroup.Id,
         targetMember.Id,
         gsrName: targetMember.AnonymousName,
-        gsrProxy: false
-    );
+        gsrProxy: false)
+    .ConfigureAwait(false);
     Console.WriteLine($"Status Code: {registerResult.StatusCode}");
 
     if (registerResult.Success && registerResult.Data != null)
@@ -575,7 +592,7 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
     // Verify by re-fetching the meeting
     Console.WriteLine();
     Console.WriteLine("  Verifying registration...");
-    var verifyMeeting = await client.GetIntergroupMeetingAsync(targetMeeting.Id);
+    var verifyMeeting = await client.GetIntergroupMeetingAsync(targetMeeting.Id).ConfigureAwait(false);
     if (verifyMeeting.Success && verifyMeeting.Data != null)
     {
         var isAttending = verifyMeeting.Data.AttendingGroups.Contains(targetGroup.Id);
@@ -590,8 +607,8 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
         targetMeeting.Id,
         targetGroup.Id,
         targetMember.Id,
-        gsrName: targetMember.AnonymousName
-    );
+        gsrName: targetMember.AnonymousName)
+    .ConfigureAwait(false);
     Console.WriteLine($"  Status Code: {duplicateResult.StatusCode} (expected 409)");
     Console.WriteLine($"  Error: {duplicateResult.Error?.Code} - {duplicateResult.Error?.Message}");
 
@@ -610,8 +627,8 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
             proxyMember.Id,
             gsrName: proxyMember.AnonymousName,
             gsrProxy: true,
-            gsrProxyName: "Jane S."
-        );
+            gsrProxyName: "Jane S.")
+        .ConfigureAwait(false);
         Console.WriteLine($"Status Code: {proxyResult.StatusCode}");
 
         if (proxyResult.Success && proxyResult.Data != null)
@@ -630,7 +647,7 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
         // Unregister the proxy group
         Console.WriteLine();
         Console.WriteLine($"  Unregistering proxy group '{proxyGroup.Title}'...");
-        var unregisterProxy = await client.UnregisterGroupAsync(targetMeeting.Id, proxyGroup.Id);
+        var unregisterProxy = await client.UnregisterGroupAsync(targetMeeting.Id, proxyGroup.Id).ConfigureAwait(false);
         Console.WriteLine($"  Status Code: {unregisterProxy.StatusCode}");
         if (unregisterProxy.Success && unregisterProxy.Data != null)
         {
@@ -647,7 +664,7 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
     Console.WriteLine("=== UNREGISTER GROUP FROM INTERGROUP MEETING ===");
     Console.WriteLine($"Unregistering group '{targetGroup.Title}' (ID: {targetGroup.Id}) from intergroup meeting ID: {targetMeeting.Id}");
 
-    var unregisterResult = await client.UnregisterGroupAsync(targetMeeting.Id, targetGroup.Id);
+    var unregisterResult = await client.UnregisterGroupAsync(targetMeeting.Id, targetGroup.Id).ConfigureAwait(false);
     Console.WriteLine($"Status Code: {unregisterResult.StatusCode}");
 
     if (unregisterResult.Success && unregisterResult.Data != null)
@@ -665,7 +682,7 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
     // Test unregister when not registered (should return 404)
     Console.WriteLine();
     Console.WriteLine("  Testing unregister when not registered...");
-    var notRegisteredResult = await client.UnregisterGroupAsync(targetMeeting.Id, targetGroup.Id);
+    var notRegisteredResult = await client.UnregisterGroupAsync(targetMeeting.Id, targetGroup.Id).ConfigureAwait(false);
     Console.WriteLine($"  Status Code: {notRegisteredResult.StatusCode} (expected 404)");
     Console.WriteLine($"  Error: {notRegisteredResult.Error?.Code} - {notRegisteredResult.Error?.Message}");
 }
@@ -673,6 +690,7 @@ else
 {
     Console.WriteLine("Skipped: requires intergroup meetings, groups, and members data");
 }
+
 Console.WriteLine();
 
 // Register Officer for Intergroup Meeting
@@ -689,8 +707,8 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
         targetMeeting.Id,
         targetOfficer.Id,
         positionName: "Treasurer",
-        officerName: targetOfficer.AnonymousName
-    );
+        officerName: targetOfficer.AnonymousName)
+    .ConfigureAwait(false);
     Console.WriteLine($"Status Code: {registerOfficerResult.StatusCode}");
 
     if (registerOfficerResult.Success && registerOfficerResult.Data != null)
@@ -708,7 +726,7 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
     // Verify by re-fetching the meeting
     Console.WriteLine();
     Console.WriteLine("  Verifying officer registration...");
-    var verifyOfficerMeeting = await client.GetIntergroupMeetingAsync(targetMeeting.Id);
+    var verifyOfficerMeeting = await client.GetIntergroupMeetingAsync(targetMeeting.Id).ConfigureAwait(false);
     if (verifyOfficerMeeting.Success && verifyOfficerMeeting.Data != null)
     {
         var isAttending = verifyOfficerMeeting.Data.AttendingOfficers.Contains(targetOfficer.Id);
@@ -723,8 +741,8 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
         targetMeeting.Id,
         targetOfficer.Id,
         positionName: "Treasurer",
-        officerName: targetOfficer.AnonymousName
-    );
+        officerName: targetOfficer.AnonymousName)
+    .ConfigureAwait(false);
     Console.WriteLine($"  Status Code: {duplicateOfficerResult.StatusCode} (expected 409)");
     Console.WriteLine($"  Error: {duplicateOfficerResult.Error?.Code} - {duplicateOfficerResult.Error?.Message}");
 
@@ -733,7 +751,7 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
     Console.WriteLine("=== UNREGISTER OFFICER FROM INTERGROUP MEETING ===");
     Console.WriteLine($"Unregistering officer '{targetOfficer.AnonymousName}' (ID: {targetOfficer.Id}) from intergroup meeting ID: {targetMeeting.Id}");
 
-    var unregisterOfficerResult = await client.UnregisterOfficerAsync(targetMeeting.Id, targetOfficer.Id);
+    var unregisterOfficerResult = await client.UnregisterOfficerAsync(targetMeeting.Id, targetOfficer.Id).ConfigureAwait(false);
     Console.WriteLine($"Status Code: {unregisterOfficerResult.StatusCode}");
 
     if (unregisterOfficerResult.Success && unregisterOfficerResult.Data != null)
@@ -750,7 +768,7 @@ if (intergroupMeetings.Success && intergroupMeetings.Data?.Count > 0
     // Test unregister officer when not registered (should return 404)
     Console.WriteLine();
     Console.WriteLine("  Testing unregister officer when not registered...");
-    var notRegisteredOfficerResult = await client.UnregisterOfficerAsync(targetMeeting.Id, targetOfficer.Id);
+    var notRegisteredOfficerResult = await client.UnregisterOfficerAsync(targetMeeting.Id, targetOfficer.Id).ConfigureAwait(false);
     Console.WriteLine($"  Status Code: {notRegisteredOfficerResult.StatusCode} (expected 404)");
     Console.WriteLine($"  Error: {notRegisteredOfficerResult.Error?.Code} - {notRegisteredOfficerResult.Error?.Message}");
 }
@@ -758,6 +776,7 @@ else
 {
     Console.WriteLine("Skipped: requires intergroup meetings and members data");
 }
+
 Console.WriteLine();
 
 Console.WriteLine("Done!");

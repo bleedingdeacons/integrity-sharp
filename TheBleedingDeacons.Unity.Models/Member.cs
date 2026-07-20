@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,15 +13,25 @@ namespace TheBleedingDeacons.Unity.Models
     public class Member
     {
         public int Id { get; init; }
+
         public string PrivateName { get; init; } = string.Empty;
+
         public string AnonymousName { get; init; } = string.Empty;
+
         public string Email { get; init; } = string.Empty;
+
         public string PersonalEmail { get; init; } = string.Empty;
+
         public string MobileNumber { get; init; } = string.Empty;
+
         public bool ShowAnonymousName { get; init; }
+
         public bool ShowMemberProfile { get; init; }
+
         public string AnonymousProfile { get; init; } = string.Empty;
+
         public int? HomeGroupId { get; init; }
+
         public string HomeGroupName { get; init; } = string.Empty;
 
         /// <summary>
@@ -31,11 +41,17 @@ namespace TheBleedingDeacons.Unity.Models
         public Group? HomeGroup { get; init; }
 
         public bool IsGsr { get; init; }
+
         public string MeetingPo { get; init; } = string.Empty;
+
         public int? IntergroupPositionId { get; init; }
+
         public string IntergroupPositionName { get; init; } = string.Empty;
+
         public string IntergroupPositionRotation { get; init; } = string.Empty;
+
         public string Link { get; init; } = string.Empty;
+
         public DateTime? Updated { get; init; }
 
         /// <summary>
@@ -55,5 +71,4 @@ namespace TheBleedingDeacons.Unity.Models
         [JsonIgnore]
         public bool HasExpandedHomeGroup => HomeGroup != null;
     }
-
 }

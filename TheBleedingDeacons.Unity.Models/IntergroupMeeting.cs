@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +13,9 @@ namespace TheBleedingDeacons.Unity.Models
     public class IntergroupMeeting
     {
         public int Id { get; init; }
+
         public string Title { get; init; } = string.Empty;
+
         public string Date { get; init; } = string.Empty;
 
         /// <summary>
@@ -58,7 +60,6 @@ namespace TheBleedingDeacons.Unity.Models
         /// Gets the meeting date as a DateOnly value, if valid.
         /// </summary>
         [JsonIgnore]
-        public DateOnly? DateValue => DateOnly.TryParse(Date, out var date) ? date : null;
+        public DateOnly? DateValue => DateOnly.TryParse(Date, System.Globalization.CultureInfo.InvariantCulture, out var date) ? date : null;
     }
-
 }

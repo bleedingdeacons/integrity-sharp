@@ -15,6 +15,7 @@ internal sealed class MockHttpMessageHandler : HttpMessageHandler
     private MockResponse _defaultResponse;
 
     public IReadOnlyList<HttpRequestMessage> CapturedRequests => _capturedRequests.AsReadOnly();
+
     public HttpRequestMessage? LastRequest => _capturedRequests.Count > 0 ? _capturedRequests[^1] : null;
 
     public MockHttpMessageHandler()
@@ -54,14 +55,14 @@ internal sealed class MockHttpMessageHandler : HttpMessageHandler
     /// </summary>
     public void SetupException(string urlPattern, string message = "Network error")
     {
-        _responses[urlPattern] = new MockResponse(HttpStatusCode.InternalServerError, "", null, new HttpRequestException(message));
+        _responses[urlPattern] = new MockResponse(HttpStatusCode.InternalServerError, string.Empty, null, new HttpRequestException(message));
     }
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         _capturedRequests.Add(request);
 
-        var url = request.RequestUri?.ToString() ?? "";
+        var url = request.RequestUri?.ToString() ?? string.Empty;
 
         // Find matching response
         foreach (var kvp in _responses)

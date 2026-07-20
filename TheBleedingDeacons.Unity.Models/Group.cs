@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace TheBleedingDeacons.Unity.Models
 {
@@ -8,13 +8,21 @@ namespace TheBleedingDeacons.Unity.Models
     public class Group
     {
         public int Id { get; init; }
+
         public string Title { get; init; } = string.Empty;
+
         public string Email { get; init; } = string.Empty;
+
         public string Phone { get; init; } = string.Empty;
+
         public string Website { get; init; } = string.Empty;
+
         public string Link { get; init; } = string.Empty;
+
         public string Notes { get; init; } = string.Empty;
+
         public int? DistrictId { get; init; }
+
         public string? LastContact { get; init; }
 
         /// <summary>
@@ -30,6 +38,7 @@ namespace TheBleedingDeacons.Unity.Models
         public List<Meeting> Meetings { get; init; } = [];
 
         public List<Contact> Contacts { get; init; } = [];
+
         public ContributionOptions? ContributionOptions { get; init; }
 
         [JsonConverter(typeof(EmptyStringToNullDateTimeConverter))]
@@ -41,5 +50,4 @@ namespace TheBleedingDeacons.Unity.Models
         [JsonIgnore]
         public bool HasExpandedMeetings => Meetings.Count > 0;
     }
-
 }

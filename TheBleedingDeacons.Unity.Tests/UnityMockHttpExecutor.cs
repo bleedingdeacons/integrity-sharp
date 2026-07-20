@@ -15,9 +15,10 @@ internal sealed class UnityMockHttpExecutor : IHttpExecutor
 
     private int _statusCode = 200;
     private string _responseBody = """{"success":true,"data":null}""";
-    private IDictionary<string, string> _headers = new Dictionary<string, string>();
+    private IDictionary<string, string> _headers = new Dictionary<string, string>(StringComparer.Ordinal);
 
     private INaturalReporter _reporter = new NullReporter();
+
     public INaturalReporter Reporter { get => _reporter; set => _reporter = value ?? new NullReporter(); }
 
     public void SetupResponse(int statusCode, object responseBody, IDictionary<string, string>? headers = null)
@@ -28,7 +29,7 @@ internal sealed class UnityMockHttpExecutor : IHttpExecutor
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
         });
-        _headers = headers ?? new Dictionary<string, string>();
+        _headers = headers ?? new Dictionary<string, string>(StringComparer.Ordinal);
     }
 
     public void SetupSuccessResponse<T>(T data, int total = 1, int page = 1, int perPage = 100) where T : class
@@ -71,10 +72,15 @@ internal sealed class UnityMockHttpExecutor : IHttpExecutor
 internal sealed class UnityMockApiResultContext : IApiResultContext
 {
     public HttpResponseMessage Response { get; }
+
     public int StatusCode { get; }
+
     public IDictionary<string, string> Headers { get; }
+
     public string RawBody { get; }
+
     public long Duration { get; set; }
+
     private readonly IHttpExecutor _httpExecutor;
 
     public UnityMockApiResultContext(
