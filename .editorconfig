@@ -59,9 +59,6 @@ dotnet_diagnostic.SA1206.severity = none
 dotnet_diagnostic.SA1010.severity = none
 # file headers
 dotnet_diagnostic.SA1633.severity = none
-# one type per file — the client and its DTOs are intentionally one file
-# (mirrors the MA0048 decision below)
-dotnet_diagnostic.SA1402.severity = none
 # XML-doc analysis disabled note
 dotnet_diagnostic.SA0001.severity = none
 # documentation presence / wording (no meaningful auto-fix)
