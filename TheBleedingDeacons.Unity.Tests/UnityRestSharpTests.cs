@@ -67,26 +67,55 @@ public class UnityRestSharpTests
             new UnityRestSharp(BaseUrl, "   "));
     }
 
-    [TestMethod]
-    public void Constructor_Should_Set_Authorization_Header()
+    // Headers (Authorization, Accept, User-Agent) are stamped onto every
+    // outgoing request via ApplyRequestHeaders() rather than set as defaults on
+    // the HttpClient, so the client can share an HttpClient without header
+    // accumulation. These tests therefore make a request and inspect the
+    // captured HttpRequestMessage rather than HttpClient.DefaultRequestHeaders.
+
+    private void SetupEmptyGroupsResponse()
     {
-        // The HttpClient should have a Bearer token set
-        Assert.AreEqual("Bearer", _httpClient.DefaultRequestHeaders.Authorization?.Scheme);
-        Assert.AreEqual(ApiKey, _httpClient.DefaultRequestHeaders.Authorization?.Parameter);
+        _mockHandler.SetupResponse("/groups", HttpStatusCode.OK, new
+        {
+            success = true,
+            data = new List<Group>(),
+            meta = new { total = 0, page = 1, per_page = 100, total_pages = 0 }
+        });
     }
 
     [TestMethod]
-    public void Constructor_Should_Set_Accept_Header()
+    public async Task Request_Should_Set_Authorization_Header()
     {
-        var acceptHeader = _httpClient.DefaultRequestHeaders.Accept.FirstOrDefault();
+        SetupEmptyGroupsResponse();
+
+        await _client.GetGroupsAsync();
+
+        var auth = _mockHandler.LastRequest!.Headers.Authorization;
+        Assert.IsNotNull(auth);
+        Assert.AreEqual("Bearer", auth.Scheme);
+        Assert.AreEqual(ApiKey, auth.Parameter);
+    }
+
+    [TestMethod]
+    public async Task Request_Should_Set_Accept_Header()
+    {
+        SetupEmptyGroupsResponse();
+
+        await _client.GetGroupsAsync();
+
+        var acceptHeader = _mockHandler.LastRequest!.Headers.Accept.FirstOrDefault();
         Assert.IsNotNull(acceptHeader);
         Assert.AreEqual("application/json", acceptHeader.MediaType);
     }
 
     [TestMethod]
-    public void Constructor_Should_Set_UserAgent_Header()
+    public async Task Request_Should_Set_UserAgent_Header()
     {
-        var userAgent = _httpClient.DefaultRequestHeaders.UserAgent.ToString();
+        SetupEmptyGroupsResponse();
+
+        await _client.GetGroupsAsync();
+
+        var userAgent = _mockHandler.LastRequest!.Headers.UserAgent.ToString();
         Assert.IsTrue(userAgent.Contains("IntegrityClient/1.0"));
     }
 
@@ -552,11 +581,14 @@ public class UnityRestSharpTests
         var body = await _mockHandler.LastRequest.Content!.ReadAsStringAsync();
         Assert.IsTrue(body.Contains("\"accepted\":true"));
         Assert.IsTrue(body.Contains("\"version\":\"2.1\""));
-        Assert.IsTrue(body.Contains("statement"));
 
-        // Method/accepted_at were not set on the request → should be omitted.
+        // Only accepted + version were set on the request; every other field is
+        // null and omitted by WhenWritingNull. Note the request no longer carries
+        // a "statement" field at all — it was replaced on the wire by policy_id.
         Assert.IsFalse(body.Contains("\"method\""));
         Assert.IsFalse(body.Contains("\"accepted_at\""));
+        Assert.IsFalse(body.Contains("statement"));
+        Assert.IsFalse(body.Contains("policy_id"));
     }
 
     [TestMethod]
@@ -936,31 +968,31 @@ public class UnityRestSharpTests
         Assert.AreEqual(404, result.StatusCode);
     }
 
+    // 429, 5xx and network errors are transient: the client retries them
+    // MaxRetryAttempts times with backoff and, once exhausted, throws
+    // RestApiRequestFailed so callers can handle retry exhaustion explicitly
+    // (rather than receiving a "successful" error ApiResponse). Rate-limit
+    // header parsing on a *successful* response is covered by
+    // Should_Parse_RateLimit_Headers.
+
     [TestMethod]
-    public async Task GetGroupsAsync_Should_Handle_429_RateLimit()
+    public async Task GetGroupsAsync_Should_Throw_After_Retrying_429_RateLimit()
     {
         _mockHandler.SetupResponse("/groups", HttpStatusCode.TooManyRequests, new
         {
             success = false,
             error = new { code = "rate_limited", message = "Too many requests" }
-        }, headers: new Dictionary<string, string>
-        {
-            ["X-RateLimit-Limit"] = "100",
-            ["X-RateLimit-Remaining"] = "0",
-            ["X-RateLimit-Reset"] = "1740600000"
         });
 
-        var result = await _client.GetGroupsAsync();
+        var ex = await Assert.ThrowsExceptionAsync<RestApiRequestFailed>(
+            () => _client.GetGroupsAsync());
 
-        Assert.IsFalse(result.Success);
-        Assert.AreEqual(429, result.StatusCode);
-        Assert.IsNotNull(result.RateLimit);
-        Assert.AreEqual(100, result.RateLimit.Limit);
-        Assert.AreEqual(0, result.RateLimit.Remaining);
+        Assert.AreEqual(429, ex.LastStatusCode);
+        Assert.AreEqual(5, ex.Attempts);
     }
 
     [TestMethod]
-    public async Task GetGroupsAsync_Should_Handle_500_ServerError()
+    public async Task GetGroupsAsync_Should_Throw_After_Retrying_500_ServerError()
     {
         _mockHandler.SetupResponse("/groups", HttpStatusCode.InternalServerError, new
         {
@@ -968,23 +1000,25 @@ public class UnityRestSharpTests
             error = new { code = "server_error", message = "Internal server error" }
         });
 
-        var result = await _client.GetGroupsAsync();
+        var ex = await Assert.ThrowsExceptionAsync<RestApiRequestFailed>(
+            () => _client.GetGroupsAsync());
 
-        Assert.IsFalse(result.Success);
-        Assert.AreEqual(500, result.StatusCode);
+        Assert.AreEqual(500, ex.LastStatusCode);
+        Assert.AreEqual(5, ex.Attempts);
     }
 
     [TestMethod]
-    public async Task GetGroupsAsync_Should_Handle_Network_Error()
+    public async Task GetGroupsAsync_Should_Throw_After_Retrying_Network_Error()
     {
         _mockHandler.SetupException("/groups", "Connection timed out");
 
-        var result = await _client.GetGroupsAsync();
+        var ex = await Assert.ThrowsExceptionAsync<RestApiRequestFailed>(
+            () => _client.GetGroupsAsync());
 
-        Assert.IsFalse(result.Success);
-        Assert.AreEqual(0, result.StatusCode);
-        Assert.IsNotNull(result.Error);
-        Assert.AreEqual("network_error", result.Error.Code);
+        // No response was ever received, so there is no last status code.
+        Assert.IsNull(ex.LastStatusCode);
+        Assert.AreEqual(5, ex.Attempts);
+        Assert.IsTrue(ex.Reason.Contains("network error"));
     }
 
     [TestMethod]
@@ -1091,8 +1125,9 @@ public class UnityRestSharpTests
 
         await _client.GetGroupsAsync(search: "test group & friends");
 
-        var url = _mockHandler.LastRequest!.RequestUri!.ToString();
-        // Should be URL-encoded
+        // AbsoluteUri preserves the percent-encoding; RequestUri.ToString()
+        // would decode %20 back to a space and mask the escaping.
+        var url = _mockHandler.LastRequest!.RequestUri!.AbsoluteUri;
         Assert.IsTrue(url.Contains("search=test%20group%20%26%20friends") ||
                        url.Contains("search=test+group+%26+friends"));
     }
