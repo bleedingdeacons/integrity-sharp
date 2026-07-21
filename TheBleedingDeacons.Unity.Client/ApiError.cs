@@ -7,13 +7,13 @@ namespace TheBleedingDeacons.Unity.Client;
 /// </summary>
 public sealed class ApiError
 {
-    /// <summary>
-    /// Gets the machine-readable error code (e.g. "unauthorized", "not_found").
-    /// </summary>
-    public required string Code { get; init; }
+	/// <summary>
+	/// Gets the machine-readable error code (e.g. "unauthorized", "not_found").
+	/// </summary>
+	public required string Code { get; init; }
 
-    /// <summary>
-    /// Gets the human-readable error message.
-    /// </summary>
-    public required string Message { get; init; }
+	/// <summary>
+	/// Gets the human-readable error message.
+	/// </summary>
+	public required string Message { get; init; }
 }

@@ -9,30 +9,30 @@ using System.Threading.Tasks;
 
 namespace TheBleedingDeacons.Unity.Models
 {
-    /// <summary>
-    /// Contact information.
-    /// </summary>
-    public class Contact
-    {
-        /// <summary>
-        /// Gets the contact's name.
-        /// </summary>
-        public string Name { get; init; } = string.Empty;
+	/// <summary>
+	/// Contact information.
+	/// </summary>
+	public class Contact
+	{
+		/// <summary>
+		/// Gets the contact's name.
+		/// </summary>
+		public string Name { get; init; } = string.Empty;
 
-        /// <summary>
-        /// Gets the contact's email address.
-        /// </summary>
-        public string Email { get; init; } = string.Empty;
+		/// <summary>
+		/// Gets the contact's email address.
+		/// </summary>
+		public string Email { get; init; } = string.Empty;
 
-        /// <summary>
-        /// Gets the contact's phone number.
-        /// </summary>
-        public string Phone { get; init; } = string.Empty;
+		/// <summary>
+		/// Gets the contact's phone number.
+		/// </summary>
+		public string Phone { get; init; } = string.Empty;
 
-        /// <summary>
-        /// Gets the timestamp at which the contact was last updated.
-        /// </summary>
-        [JsonConverter(typeof(EmptyStringToNullDateTimeConverter))]
-        public DateTime? Updated { get; init; }
-    }
+		/// <summary>
+		/// Gets the timestamp at which the contact was last updated.
+		/// </summary>
+		[JsonConverter(typeof(EmptyStringToNullDateTimeConverter))]
+		public DateTime? Updated { get; init; }
+	}
 }
