@@ -1,5 +1,5 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NaturalApi;
+using Xunit;
 
 namespace TheBleedingDeacons.Unity.Tests;
 
@@ -8,20 +8,18 @@ namespace TheBleedingDeacons.Unity.Tests;
 /// to validate UnityRestSharp response shapes through NaturalApi's DSL.
 /// These tests show how the NaturalApi pattern can complement direct unit tests.
 /// </summary>
-[TestClass]
 public class UnityRestSharpNaturalApiTests
 {
-	private UnityMockHttpExecutor _mockExecutor = null!;
-	private IApi _api = null!;
+	private readonly UnityMockHttpExecutor _mockExecutor;
+	private readonly IApi _api;
 
-	[TestInitialize]
-	public void Setup()
+	public UnityRestSharpNaturalApiTests()
 	{
 		_mockExecutor = new UnityMockHttpExecutor();
 		_api = new Api(_mockExecutor);
 	}
 
-	[TestMethod]
+	[Fact]
 	public void GetGroups_Fluent_Should_Return_200_With_Groups()
 	{
 		// Arrange — mock a Unity-style wrapped response
@@ -37,7 +35,7 @@ public class UnityRestSharpNaturalApiTests
 			.ShouldReturn(200);
 	}
 
-	[TestMethod]
+	[Fact]
 	public void GetGroups_Fluent_Should_Validate_Response_Headers()
 	{
 		_mockExecutor.SetupResponse(200, new
@@ -55,7 +53,7 @@ public class UnityRestSharpNaturalApiTests
 			.ShouldReturn(200, headers => headers.ContainsKey("X-RateLimit-Limit"));
 	}
 
-	[TestMethod]
+	[Fact]
 	public void GetGroups_Fluent_Should_Validate_Error_Response()
 	{
 		_mockExecutor.SetupErrorResponse(401, "unauthorized", "Invalid API key");
@@ -64,10 +62,10 @@ public class UnityRestSharpNaturalApiTests
 			.UsingAuth("Bearer bad-key")
 			.Get();
 
-		Assert.AreEqual(401, result.StatusCode);
+		Assert.Equal(401, result.StatusCode);
 	}
 
-	[TestMethod]
+	[Fact]
 	public void PostUpdateMember_Fluent_Should_Send_Body()
 	{
 		_mockExecutor.SetupSuccessResponse(new { id = 5, anonymous_name = "Updated" });
@@ -81,11 +79,11 @@ public class UnityRestSharpNaturalApiTests
 		result.ShouldReturn(200);
 
 		// Verify the executor captured the request spec with body
-		Assert.IsNotNull(_mockExecutor.LastSpec);
-		Assert.AreEqual(HttpMethod.Post, _mockExecutor.LastSpec.Method);
+		Assert.NotNull(_mockExecutor.LastSpec);
+		Assert.Equal(HttpMethod.Post, _mockExecutor.LastSpec.Method);
 	}
 
-	[TestMethod]
+	[Fact]
 	public void RegisterGroup_Fluent_Should_Post_To_Correct_Endpoint()
 	{
 		_mockExecutor.SetupSuccessResponse(new
@@ -99,11 +97,11 @@ public class UnityRestSharpNaturalApiTests
 			.Post(new { group_id = 10, member_id = 5, gsr_name = "John D." })
 			.ShouldReturn(200);
 
-		Assert.IsNotNull(_mockExecutor.LastSpec);
-		Assert.IsTrue(_mockExecutor.LastSpec.Endpoint.Contains("register-group", StringComparison.Ordinal));
+		Assert.NotNull(_mockExecutor.LastSpec);
+		Assert.True(_mockExecutor.LastSpec.Endpoint.Contains("register-group", StringComparison.Ordinal));
 	}
 
-	[TestMethod]
+	[Fact]
 	public void HealthCheck_Fluent_Should_Return_Status()
 	{
 		_mockExecutor.SetupResponse(200,
@@ -114,7 +112,7 @@ public class UnityRestSharpNaturalApiTests
 			.ShouldReturn(200);
 	}
 
-	[TestMethod]
+	[Fact]
 	public void GetMeetings_Fluent_With_QueryParams_Should_Build_Correct_Spec()
 	{
 		_mockExecutor.SetupSuccessResponse(new List<object>(), total: 0);
@@ -124,12 +122,12 @@ public class UnityRestSharpNaturalApiTests
 			.WithQueryParam("online", "true")
 			.Get();
 
-		Assert.IsNotNull(_mockExecutor.LastSpec);
-		Assert.IsTrue(_mockExecutor.LastSpec.QueryParams.ContainsKey("day"));
-		Assert.IsTrue(_mockExecutor.LastSpec.QueryParams.ContainsKey("online"));
+		Assert.NotNull(_mockExecutor.LastSpec);
+		Assert.True(_mockExecutor.LastSpec.QueryParams.ContainsKey("day"));
+		Assert.True(_mockExecutor.LastSpec.QueryParams.ContainsKey("online"));
 	}
 
-	[TestMethod]
+	[Fact]
 	public void GetGroup_Fluent_Should_Include_Auth_Header()
 	{
 		_mockExecutor.SetupSuccessResponse(new { id = 1, title = "Test Group" });
@@ -139,12 +137,12 @@ public class UnityRestSharpNaturalApiTests
 			.Get()
 			.ShouldReturn(200);
 
-		Assert.IsNotNull(_mockExecutor.LastSpec);
-		Assert.IsTrue(_mockExecutor.LastSpec.Headers.ContainsKey("Authorization"));
-		Assert.AreEqual("Bearer test-key-123", _mockExecutor.LastSpec.Headers["Authorization"]);
+		Assert.NotNull(_mockExecutor.LastSpec);
+		Assert.True(_mockExecutor.LastSpec.Headers.ContainsKey("Authorization"));
+		Assert.Equal("Bearer test-key-123", _mockExecutor.LastSpec.Headers["Authorization"]);
 	}
 
-	[TestMethod]
+	[Fact]
 	public void GetMembers_Fluent_Should_Chain_Multiple_Params()
 	{
 		_mockExecutor.SetupSuccessResponse(new List<object>());
@@ -159,6 +157,6 @@ public class UnityRestSharpNaturalApiTests
 			.ShouldReturn(200);
 
 		var spec = _mockExecutor.LastSpec!;
-		Assert.AreEqual(5, spec.QueryParams.Count);
+		Assert.Equal(5, spec.QueryParams.Count);
 	}
 }

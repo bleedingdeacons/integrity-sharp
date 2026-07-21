@@ -17,14 +17,21 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # 9.0.x builds the Client/Models/Tests projects; 10.0.x builds the
-          # example CLI (example/Integrity-cli targets net10.0).
+          # 9.0.x builds the Client/Models/Tests projects (pinned via the repo
+          # root global.json); 10.0.x builds the example CLI (example/Integrity-cli
+          # targets net10.0 and is pinned by example/global.json).
           dotnet-version: |
             9.0.x
             10.0.x
 
+      # coverlet.console is a local tool (.config/dotnet-tools.json); it collects
+      # coverage over the Microsoft.Testing.Platform test host below.
+      - name: Restore local tools (coverlet.console)
+        run: dotnet tool restore
+
       # The library solution (Client + Models). Restored and built in Release so
       # the NuGet-packable Client project is validated the same way it ships.
+      # Runs from the repo root, so the root global.json selects the .NET 9 SDK.
       - name: Restore library solution
         run: dotnet restore TheBleedingDeacons.Unity.Client.sln
 
@@ -32,20 +39,53 @@ jobs:
         run: dotnet build TheBleedingDeacons.Unity.Client.sln --configuration Release --no-restore
 
       # Enforce formatting and the StyleCop / Meziantou analyzers (configured in
-      # .editorconfig) across all three targets. Fails the build if `dotnet
-      # format` would change anything. Run before the tests so a formatting
-      # regression is reported up front.
+      # .editorconfig) for the library and the test project. Fails the build if
+      # `dotnet format` would change anything. Run before the tests so a
+      # formatting regression is reported up front. (The example is formatted in
+      # its own step below, under the .NET 10 SDK.)
       - name: Verify formatting (dotnet format --verify-no-changes)
         run: |
           dotnet format TheBleedingDeacons.Unity.Client.sln --verify-no-changes
           dotnet format TheBleedingDeacons.Unity.Tests/TheBleedingDeacons.Unity.Tests.csproj --verify-no-changes
-          dotnet format example/Integrity-cli/Integrity-cli.sln --verify-no-changes
 
-      # The test project is not part of any solution, so it is built and run
-      # explicitly. It project-references Client + Models, so this also builds them.
-      - name: Test
-        run: dotnet test TheBleedingDeacons.Unity.Tests/TheBleedingDeacons.Unity.Tests.csproj --configuration Release --logger "console;verbosity=normal"
+      # Debug build so coverlet instruments unoptimised assemblies with matching
+      # PDBs. The test project references Client + Models, so this builds them too.
+      - name: Build tests (Debug)
+        run: dotnet build TheBleedingDeacons.Unity.Tests/TheBleedingDeacons.Unity.Tests.csproj --configuration Debug
 
-      # The example CLI has its own solution and targets net10.0.
+      # xUnit v3 runs on Microsoft.Testing.Platform, so the test project is an
+      # executable. coverlet.console instruments the library assemblies and runs
+      # the test host, producing a Cobertura report. (coverlet's collector /
+      # msbuild integrations hook VSTest, which MTP doesn't use — hence the tool.)
+      # The root global.json keeps coverlet on the .NET 9 SDK so the assemblies it
+      # instruments match the net9.0 runtime the test host loads them on.
+      - name: Test with coverage
+        run: >
+          dotnet coverlet TheBleedingDeacons.Unity.Tests/bin/Debug/net9.0/TheBleedingDeacons.Unity.Tests.dll
+          --target dotnet
+          --targetargs "TheBleedingDeacons.Unity.Tests/bin/Debug/net9.0/TheBleedingDeacons.Unity.Tests.dll"
+          --format cobertura
+          --output coverage/coverage.cobertura.xml
+          --include "[TheBleedingDeacons.Unity.Client]*"
+          --include "[TheBleedingDeacons.Unity.Models]*"
+
+      - name: Upload coverage to Coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          # Public repo: the built-in GITHUB_TOKEN authenticates the upload,
+          # so no separate Coveralls token/secret is required.
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: coverage/coverage.cobertura.xml
+          format: cobertura
+          fail-on-error: false
+
+      # The example CLI has its own solution and targets net10.0, so it is built
+      # from the example/ directory where example/global.json selects the .NET 10
+      # SDK (the repo root global.json would otherwise force .NET 9 here).
+      - name: Verify example formatting
+        working-directory: example
+        run: dotnet format Integrity-cli/Integrity-cli.sln --verify-no-changes
+
       - name: Build example CLI
-        run: dotnet build example/Integrity-cli/Integrity-cli.sln --configuration Release
+        working-directory: example
+        run: dotnet build Integrity-cli/Integrity-cli.sln --configuration Release

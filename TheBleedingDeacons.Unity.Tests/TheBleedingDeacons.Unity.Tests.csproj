@@ -4,14 +4,25 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>13</LangVersion>
+    <!-- xUnit v3 test projects are executables that host Microsoft.Testing.Platform. -->
+    <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- Run through Microsoft.Testing.Platform (not VSTest) under `dotnet test`. -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
     <Copyright>Don't take yourself too damn seriously</Copyright>
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-    <PackageReference Include="MSTest" Version="3.6.4" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <!--
+      Coverage is collected in CI with the coverlet.console tool (see
+      .config/dotnet-tools.json), which wraps the Microsoft.Testing.Platform
+      test executable. coverlet's collector/msbuild integrations hook VSTest,
+      which MTP does not use, so they are intentionally not referenced here.
+    -->
     <PackageReference Include="NaturalApi" Version="1.0.6" />
   </ItemGroup>
   <ItemGroup>

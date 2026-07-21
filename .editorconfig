@@ -104,6 +104,15 @@ dotnet_diagnostic.SA1600.severity = none
 dotnet_diagnostic.SA1629.severity = none
 dotnet_diagnostic.SA1633.severity = none
 
+# xUnit1051 asks every call that accepts a CancellationToken to thread
+# TestContext.Current.CancellationToken through it. These are mock-backed unit
+# tests that complete instantly against an in-memory handler, so the
+# cancellation-responsiveness benefit is nil — silence the rule here rather
+# than thread a token through every client call. (`dotnet format
+# --verify-no-changes` in CI reports it as a change it cannot auto-fix, so it
+# must be quieted, not just left as a warning.)
+dotnet_diagnostic.xUnit1051.severity = none
+
 [example/**.cs]
 dotnet_diagnostic.SA1600.severity = none
 dotnet_diagnostic.SA1629.severity = none

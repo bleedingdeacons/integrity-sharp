@@ -1,6 +1,7 @@
 # Integrity C# Client (`integrity-sharp`)
 
 [![CI](https://github.com/bleedingdeacons/integrity-sharp/actions/workflows/ci.yml/badge.svg)](https://github.com/bleedingdeacons/integrity-sharp/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/bleedingdeacons/integrity-sharp/badge.svg?branch=main)](https://coveralls.io/github/bleedingdeacons/integrity-sharp?branch=main)
 
 A C# client library for the [Integrity](https://github.com/bleedingdeacons/integrity)
 WordPress REST API — secure, authenticated access to Unity intergroup Groups,
@@ -15,7 +16,7 @@ be versioned, built and packaged independently of the WordPress plugin.
 | --- | --- | --- |
 | `TheBleedingDeacons.Unity.Client` | net9.0 | The client (`UnityRestSharp`). Packaged as **`Integrity.Client`**. |
 | `TheBleedingDeacons.Unity.Models` | net9.0 | Request/response models (Group, Meeting, Member, GDPR, …). |
-| `TheBleedingDeacons.Unity.Tests`  | net9.0 | MSTest unit tests. |
+| `TheBleedingDeacons.Unity.Tests`  | net9.0 | xUnit v3 unit tests (Microsoft.Testing.Platform). |
 | `example/Integrity-cli`           | net10.0 | Runnable example console app. |
 
 ## Usage
