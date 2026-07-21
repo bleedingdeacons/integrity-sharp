@@ -1,3 +1,5 @@
+// Copyright (c) The Bleeding Deacons. Licensed under the MIT license.
+
 using System;
 using System.Text.Json.Serialization;
 

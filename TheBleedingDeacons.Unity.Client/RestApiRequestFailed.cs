@@ -1,3 +1,5 @@
+// Copyright (c) The Bleeding Deacons. Licensed under the MIT license.
+
 namespace TheBleedingDeacons.Unity.Client;
 
 /// <summary>

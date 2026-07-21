@@ -57,12 +57,20 @@ dotnet_diagnostic.SA1413.severity = none
 dotnet_diagnostic.SA1206.severity = none
 # collection-expression bracket spacing
 dotnet_diagnostic.SA1010.severity = none
-# file headers
-dotnet_diagnostic.SA1633.severity = none
 # XML-doc analysis disabled note
 dotnet_diagnostic.SA0001.severity = none
-# documentation presence / wording (no meaningful auto-fix)
-dotnet_diagnostic.SA1600.severity = none
+
+# Documentation rules ENABLED for the library (Client + Models). The test
+# project and the example app are exempted at the bottom of this file.
+#   SA1600 — public members must carry a <summary>
+#   SA1629 — documentation text must end with a period
+#   SA1633 — every file must carry the copyright header (text in stylecop.json)
+dotnet_diagnostic.SA1600.severity = warning
+dotnet_diagnostic.SA1629.severity = warning
+dotnet_diagnostic.SA1633.severity = warning
+
+# Other documentation rules stay off — param / returns / type-param docs and
+# property / constructor wording are not required.
 dotnet_diagnostic.SA1601.severity = none
 dotnet_diagnostic.SA1602.severity = none
 dotnet_diagnostic.SA1611.severity = none
@@ -70,7 +78,6 @@ dotnet_diagnostic.SA1614.severity = none
 dotnet_diagnostic.SA1615.severity = none
 dotnet_diagnostic.SA1618.severity = none
 dotnet_diagnostic.SA1623.severity = none
-dotnet_diagnostic.SA1629.severity = none
 dotnet_diagnostic.SA1642.severity = none
 
 # ---------------------------------------------------------------------------
@@ -89,3 +96,15 @@ indent_size = 2
 [*.{yml,yaml,json,md}]
 indent_style = space
 indent_size = 2
+
+# Documentation rules (summaries / period / file header) are not required in the
+# test project or the example app — only the public library API is documented.
+[TheBleedingDeacons.Unity.Tests/**.cs]
+dotnet_diagnostic.SA1600.severity = none
+dotnet_diagnostic.SA1629.severity = none
+dotnet_diagnostic.SA1633.severity = none
+
+[example/**.cs]
+dotnet_diagnostic.SA1600.severity = none
+dotnet_diagnostic.SA1629.severity = none
+dotnet_diagnostic.SA1633.severity = none

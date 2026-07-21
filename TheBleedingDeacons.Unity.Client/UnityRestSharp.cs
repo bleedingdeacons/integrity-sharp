@@ -1,3 +1,5 @@
+// Copyright (c) The Bleeding Deacons. Licensed under the MIT license.
+
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -31,10 +33,10 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Creates a new Integrity API client.
     /// </summary>
-    /// <param name="baseUrl">The WordPress site URL (e.g., "https://example.com")</param>
-    /// <param name="apiKey">Your Integrity API key</param>
-    /// <param name="httpClient">Optional HttpClient instance for dependency injection</param>
-    /// <param name="logger">Optional ILogger instance for structured logging</param>
+    /// <param name="baseUrl">The WordPress site URL (e.g., "https://example.com").</param>
+    /// <param name="apiKey">Your Integrity API key.</param>
+    /// <param name="httpClient">Optional HttpClient instance for dependency injection.</param>
+    /// <param name="logger">Optional ILogger instance for structured logging.</param>
     public UnityRestSharp(string baseUrl, string apiKey, HttpClient? httpClient = null, ILogger<UnityRestSharp>? logger = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(baseUrl);
@@ -80,12 +82,12 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Gets all groups with optional filtering.
     /// </summary>
-    /// <param name="page">Page number (default: 1)</param>
-    /// <param name="perPage">Results per page (default: 100, max: 500)</param>
-    /// <param name="search">Search term to filter groups</param>
-    /// <param name="districtId">Filter by district ID</param>
-    /// <param name="expandMeetings">When true, includes full meeting data instead of just IDs</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="page">Page number (default: 1).</param>
+    /// <param name="perPage">Results per page (default: 100, max: 500).</param>
+    /// <param name="search">Search term to filter groups.</param>
+    /// <param name="districtId">Filter by district ID.</param>
+    /// <param name="expandMeetings">When true, includes full meeting data instead of just IDs.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<List<Group>>> GetGroupsAsync(
         int page = 1,
         int perPage = 100,
@@ -116,9 +118,9 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Gets a single group by ID.
     /// </summary>
-    /// <param name="id">Group ID</param>
-    /// <param name="expandMeetings">When true, includes full meeting data instead of just IDs</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="id">Group ID.</param>
+    /// <param name="expandMeetings">When true, includes full meeting data instead of just IDs.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<Group>> GetGroupAsync(
         int id,
         bool expandMeetings = false,
@@ -139,13 +141,13 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Gets all meetings with optional filtering.
     /// </summary>
-    /// <param name="page">Page number (default: 1)</param>
-    /// <param name="perPage">Results per page (default: 100, max: 500)</param>
+    /// <param name="page">Page number (default: 1).</param>
+    /// <param name="perPage">Results per page (default: 100, max: 500).</param>
     /// <param name="dayOfWeek">Filter by day of week (Sunday=0, Monday=1, etc.)</param>
-    /// <param name="online">Filter by online (true) or in-person (false) meetings</param>
-    /// <param name="groupId">Filter by group ID</param>
-    /// <param name="search">Search term to filter meetings</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="online">Filter by online (true) or in-person (false) meetings.</param>
+    /// <param name="groupId">Filter by group ID.</param>
+    /// <param name="search">Search term to filter meetings.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<List<Meeting>>> GetMeetingsAsync(
         int page = 1,
         int perPage = 100,
@@ -193,10 +195,10 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Gets all positions with optional filtering.
     /// </summary>
-    /// <param name="page">Page number (default: 1)</param>
-    /// <param name="perPage">Results per page (default: 100, max: 500)</param>
-    /// <param name="search">Search term to filter positions</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="page">Page number (default: 1).</param>
+    /// <param name="perPage">Results per page (default: 100, max: 500).</param>
+    /// <param name="search">Search term to filter positions.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<List<Position>>> GetPositionsAsync(
         int page = 1,
         int perPage = 100,
@@ -219,8 +221,8 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Gets a single position by ID.
     /// </summary>
-    /// <param name="id">Position ID</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="id">Position ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<Position>> GetPositionAsync(
         int id,
         CancellationToken cancellationToken = default)
@@ -236,12 +238,12 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Gets all members with optional filtering.
     /// </summary>
-    /// <param name="page">Page number (default: 1)</param>
-    /// <param name="perPage">Results per page (default: 100, max: 500)</param>
-    /// <param name="search">Search term to filter members</param>
-    /// <param name="homeGroupId">Filter by home group ID</param>
-    /// <param name="expandHomeGroup">When true, includes full home group data instead of just ID</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="page">Page number (default: 1).</param>
+    /// <param name="perPage">Results per page (default: 100, max: 500).</param>
+    /// <param name="search">Search term to filter members.</param>
+    /// <param name="homeGroupId">Filter by home group ID.</param>
+    /// <param name="expandHomeGroup">When true, includes full home group data instead of just ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<List<Member>>> GetMembersAsync(
         int page = 1,
         int perPage = 100,
@@ -272,9 +274,9 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Gets a single member by ID.
     /// </summary>
-    /// <param name="id">Member ID</param>
-    /// <param name="expandHomeGroup">When true, includes full home group data instead of just ID</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="id">Member ID.</param>
+    /// <param name="expandHomeGroup">When true, includes full home group data instead of just ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<Member>> GetMemberAsync(
         int id,
         bool expandHomeGroup = false,
@@ -292,8 +294,8 @@ public sealed class UnityRestSharp : IDisposable
     /// Creates a new member.
     /// Requires the members:write permission.
     /// </summary>
-    /// <param name="request">The member data to create</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="request">The member data to create.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<Member>> CreateMemberAsync(
         CreateMemberRequest request,
         CancellationToken cancellationToken = default)
@@ -306,9 +308,9 @@ public sealed class UnityRestSharp : IDisposable
     /// Updates a member. Only the fields set on the request object will be changed (partial update).
     /// Requires the members:write permission.
     /// </summary>
-    /// <param name="id">Member ID to update</param>
-    /// <param name="request">Fields to update</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="id">Member ID to update.</param>
+    /// <param name="request">Fields to update.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<Member>> UpdateMemberAsync(
         int id,
         UpdateMemberRequest request,
@@ -329,9 +331,9 @@ public sealed class UnityRestSharp : IDisposable
     /// without a follow-up <c>GET</c>. The endpoint is idempotent at the
     /// repository layer: posting the current state is a no-op.
     /// </remarks>
-    /// <param name="id">Member ID to record compliance against</param>
-    /// <param name="request">The compliance action to record</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="id">Member ID to record compliance against.</param>
+    /// <param name="request">The compliance action to record.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<Member>> RecordComplianceAsync(
         int id,
         RecordComplianceRequest request,
@@ -348,11 +350,11 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Gets all intergroup meetings with optional filtering.
     /// </summary>
-    /// <param name="page">Page number (default: 1)</param>
-    /// <param name="perPage">Results per page (default: 100, max: 500)</param>
-    /// <param name="dateFrom">Filter meetings on or after this date (format: yyyy-MM-dd)</param>
-    /// <param name="dateTo">Filter meetings on or before this date (format: yyyy-MM-dd)</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="page">Page number (default: 1).</param>
+    /// <param name="perPage">Results per page (default: 100, max: 500).</param>
+    /// <param name="dateFrom">Filter meetings on or after this date (format: yyyy-MM-dd).</param>
+    /// <param name="dateTo">Filter meetings on or before this date (format: yyyy-MM-dd).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<List<IntergroupMeeting>>> GetIntergroupMeetingsAsync(
         int page = 1,
         int perPage = 100,
@@ -379,8 +381,8 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Gets a single intergroup meeting by ID.
     /// </summary>
-    /// <param name="id">Intergroup meeting ID</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="id">Intergroup meeting ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<IntergroupMeeting>> GetIntergroupMeetingAsync(
         int id,
         CancellationToken cancellationToken = default)
@@ -392,13 +394,13 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Registers a group as an attendee of an intergroup meeting.
     /// </summary>
-    /// <param name="intergroupMeetingId">The intergroup meeting ID</param>
-    /// <param name="groupId">The group CPT post ID to register</param>
-    /// <param name="memberId">The member ID of the GSR (optional, 0 if not applicable)</param>
-    /// <param name="gsrName">The GSR name (plain text)</param>
-    /// <param name="gsrProxy">Whether a proxy attended in place of the GSR</param>
-    /// <param name="gsrProxyName">The proxy name when a proxy attended</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="intergroupMeetingId">The intergroup meeting ID.</param>
+    /// <param name="groupId">The group CPT post ID to register.</param>
+    /// <param name="memberId">The member ID of the GSR (optional, 0 if not applicable).</param>
+    /// <param name="gsrName">The GSR name (plain text).</param>
+    /// <param name="gsrProxy">Whether a proxy attended in place of the GSR.</param>
+    /// <param name="gsrProxyName">The proxy name when a proxy attended.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<IntergroupMeetingGroupRegistration>> RegisterGroupAsync(
         int intergroupMeetingId,
         int groupId,
@@ -423,9 +425,9 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Unregisters a group from an intergroup meeting.
     /// </summary>
-    /// <param name="intergroupMeetingId">The intergroup meeting ID</param>
-    /// <param name="groupId">The group CPT post ID to unregister</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="intergroupMeetingId">The intergroup meeting ID.</param>
+    /// <param name="groupId">The group CPT post ID to unregister.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<IntergroupMeetingGroupRegistration>> UnregisterGroupAsync(
         int intergroupMeetingId,
         int groupId,
@@ -439,11 +441,11 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Registers an officer as an attendee of an intergroup meeting.
     /// </summary>
-    /// <param name="intergroupMeetingId">The intergroup meeting ID</param>
-    /// <param name="officerId">The officer (member) ID to register</param>
-    /// <param name="positionName">The position name (plain text)</param>
-    /// <param name="officerName">The officer name (plain text)</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="intergroupMeetingId">The intergroup meeting ID.</param>
+    /// <param name="officerId">The officer (member) ID to register.</param>
+    /// <param name="positionName">The position name (plain text).</param>
+    /// <param name="officerName">The officer name (plain text).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<IntergroupMeetingOfficerRegistration>> RegisterOfficerAsync(
         int intergroupMeetingId,
         int officerId,
@@ -464,9 +466,9 @@ public sealed class UnityRestSharp : IDisposable
     /// <summary>
     /// Unregisters an officer from an intergroup meeting.
     /// </summary>
-    /// <param name="intergroupMeetingId">The intergroup meeting ID</param>
-    /// <param name="officerId">The officer (member) ID to unregister</param>
-    /// <param name="cancellationToken">Cancellation token</param>
+    /// <param name="intergroupMeetingId">The intergroup meeting ID.</param>
+    /// <param name="officerId">The officer (member) ID to unregister.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ApiResponse<IntergroupMeetingOfficerRegistration>> UnregisterOfficerAsync(
         int intergroupMeetingId,
         int officerId,

@@ -1,4 +1,3 @@
-// See https://aka.ms/new-console-template for more information
 using TheBleedingDeacons.Unity.Client;
 using TheBleedingDeacons.Unity.Models;
 

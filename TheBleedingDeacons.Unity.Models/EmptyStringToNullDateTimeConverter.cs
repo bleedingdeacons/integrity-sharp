@@ -1,3 +1,5 @@
+// Copyright (c) The Bleeding Deacons. Licensed under the MIT license.
+
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -15,6 +17,10 @@ namespace TheBleedingDeacons.Unity.Models
     /// </summary>
     public sealed class EmptyStringToNullDateTimeConverter : JsonConverter<DateTime?>
     {
+        /// <summary>
+        /// Reads a JSON value and converts it to a nullable <see cref="DateTime"/>,
+        /// treating null and empty/whitespace strings as <see langword="null"/>.
+        /// </summary>
         public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType == JsonTokenType.Null)
@@ -43,6 +49,9 @@ namespace TheBleedingDeacons.Unity.Models
             throw new JsonException($"Unexpected token type {reader.TokenType} for DateTime?.");
         }
 
+        /// <summary>
+        /// Writes a nullable <see cref="DateTime"/> as a round-trippable UTC string, or a JSON null.
+        /// </summary>
         public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
         {
             if (value.HasValue)

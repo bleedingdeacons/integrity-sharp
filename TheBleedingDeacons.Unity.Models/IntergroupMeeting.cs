@@ -1,3 +1,5 @@
+// Copyright (c) The Bleeding Deacons. Licensed under the MIT license.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +14,19 @@ namespace TheBleedingDeacons.Unity.Models
     /// </summary>
     public class IntergroupMeeting
     {
+        /// <summary>
+        /// Gets the intergroup meeting's unique identifier.
+        /// </summary>
         public int Id { get; init; }
 
+        /// <summary>
+        /// Gets the intergroup meeting title.
+        /// </summary>
         public string Title { get; init; } = string.Empty;
 
+        /// <summary>
+        /// Gets the intergroup meeting date (as returned by the API).
+        /// </summary>
         public string Date { get; init; } = string.Empty;
 
         /// <summary>

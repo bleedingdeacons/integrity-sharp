@@ -1,3 +1,5 @@
+// Copyright (c) The Bleeding Deacons. Licensed under the MIT license.
+
 using System.Text.Json.Serialization;
 
 namespace TheBleedingDeacons.Unity.Models
@@ -13,9 +15,15 @@ namespace TheBleedingDeacons.Unity.Models
         /// </summary>
         public required string AnonymousName { get; init; }
 
+        /// <summary>
+        /// The member's personal email address.
+        /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? PersonalEmail { get; init; }
 
+        /// <summary>
+        /// The member's mobile phone number.
+        /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? MobileNumber { get; init; }
 

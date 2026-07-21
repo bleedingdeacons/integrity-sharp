@@ -1,3 +1,5 @@
+// Copyright (c) The Bleeding Deacons. Licensed under the MIT license.
+
 using System.Text.Json.Serialization;
 
 namespace TheBleedingDeacons.Unity.Models
