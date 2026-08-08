@@ -53,10 +53,14 @@
 
   <!-- Models is not published as its own package, but its types (Group, Meeting,
        Member, …) appear in this library's public API, so its assembly has to ship
-       inside this .nupkg. PrivateAssets="all" stops NuGet emitting a dependency on
-       a package that doesn't exist; the target below then copies the built
-       Models.dll into lib/<tfm>/ alongside the client. Without both halves the
-       package restores cleanly and then throws TypeLoadException at runtime. -->
+       inside this .nupkg — otherwise the package restores cleanly and then throws
+       TypeLoadException at runtime. The target below copies the built Models.dll
+       into lib/<tfm>/ alongside the client, and PrivateAssets="all" stops NuGet
+       emitting a dependency on an Integrity.Models package that will never exist.
+       (IsPackable=false on Models is not enough on its own — NuGet still writes
+       the dependency.) The tradeoff is that PrivateAssets also cuts Models out of
+       in-repo projects that reference this one, so both the test project and
+       example/Integrity-cli carry their own ProjectReference to Models. -->
   <ItemGroup>
     <ProjectReference Include="..\TheBleedingDeacons.Unity.Models\TheBleedingDeacons.Unity.Models.csproj" PrivateAssets="all" />
   </ItemGroup>
