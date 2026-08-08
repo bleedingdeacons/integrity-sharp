@@ -15,9 +15,61 @@ be versioned, built and packaged independently of the WordPress plugin.
 | Project | Target | Purpose |
 | --- | --- | --- |
 | `TheBleedingDeacons.Unity.Client` | net9.0 | The client (`UnityRestSharp`). Packaged as **`Integrity.Client`**. |
-| `TheBleedingDeacons.Unity.Models` | net9.0 | Request/response models (Group, Meeting, Member, GDPR, …). |
+| `TheBleedingDeacons.Unity.Models` | net9.0 | Request/response models (Group, Meeting, Member, GDPR, …). Ships bundled inside `Integrity.Client`. |
 | `TheBleedingDeacons.Unity.Tests`  | net9.0 | xUnit v3 unit tests (Microsoft.Testing.Platform). |
 | `example/Integrity-cli`           | net10.0 | Runnable example console app. |
+
+## Installing
+
+Releases are published to **GitHub Packages** as `Integrity.Client`. The
+`TheBleedingDeacons.Unity.Models` assembly ships bundled inside that package, so
+it is the only reference you need.
+
+GitHub Packages requires authentication even for public repositories. Create a
+[classic personal access token](https://github.com/settings/tokens) with the
+`read:packages` scope, then add a `nuget.config` next to your solution:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <add key="bleedingdeacons" value="https://nuget.pkg.github.com/bleedingdeacons/index.json" />
+  </packageSources>
+  <packageSourceCredentials>
+    <bleedingdeacons>
+      <add key="Username" value="YOUR_GITHUB_USERNAME" />
+      <add key="ClearTextPassword" value="%GITHUB_PACKAGES_TOKEN%" />
+    </bleedingdeacons>
+  </packageSourceCredentials>
+</configuration>
+```
+
+Keep the token in the `GITHUB_PACKAGES_TOKEN` environment variable rather than in
+the file, and don't commit a `nuget.config` containing a literal token. Then:
+
+```bash
+dotnet add package Integrity.Client
+```
+
+Alternatively, every release also attaches the `.nupkg` to its
+[GitHub Release](https://github.com/bleedingdeacons/integrity-sharp/releases).
+Download it into a folder and add that folder as a package source — no token
+required.
+
+## Releasing
+
+`ci.yml` runs on every push and PR to `main`. `release.yml` runs on a version tag:
+it repeats the full CI gate (build, `dotnet format`, analyzers, tests) and
+publishes only if all of it passes.
+
+```bash
+git tag v1.10.4 && git push origin v1.10.4
+```
+
+The tag drives the package version (`v1.10.4` → `1.10.4`), overriding `<Version>`
+in the csproj, so a tag and a published package can never disagree. Tags with a
+prerelease suffix (`v1.11.0-rc.1`) are marked as prereleases. Nothing publishes
+from a plain push to `main`.
 
 ## Usage
 

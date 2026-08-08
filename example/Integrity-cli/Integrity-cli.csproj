@@ -8,8 +8,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Models is referenced explicitly (as the test project also does) because the
+       client marks its own Models reference PrivateAssets="all" so that packing
+       doesn't emit a dependency on a package that isn't published — Models ships
+       bundled inside Integrity.Client. Consumers of the NuGet package get the
+       Models types without this; only in-repo project references need it. -->
   <ItemGroup>
     <ProjectReference Include="..\..\TheBleedingDeacons.Unity.Client\TheBleedingDeacons.Unity.Client.csproj" />
+    <ProjectReference Include="..\..\TheBleedingDeacons.Unity.Models\TheBleedingDeacons.Unity.Models.csproj" />
   </ItemGroup>
 
 </Project>
