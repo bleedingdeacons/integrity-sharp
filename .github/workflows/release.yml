@@ -1,0 +1,121 @@
+name: Release
+
+# Pushing a tag like `v1.10.4` re-runs the full CI gate (build, formatting,
+# analyzers, tests) and only publishes if all of it passes. ci.yml itself only
+# triggers on branch pushes and PRs, so tagging doesn't double up on it.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # create the GitHub Release and attach the .nupkg
+  packages: write # push the .nupkg to GitHub Packages
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          # Full history so the generated release notes can diff against the
+          # previous tag.
+          fetch-depth: 0
+
+      # The tag is the single source of truth for the released version; it is
+      # passed to `dotnet pack` below and overrides the <Version> in the csproj,
+      # so the two can never disagree in a published package.
+      - name: Derive version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::Tag '$GITHUB_REF_NAME' is not of the form v<major>.<minor>.<patch>[-prerelease]"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # A prerelease tag (v1.11.0-rc.1) is marked as such on the Release.
+          case "$VERSION" in
+            *-*) echo "prerelease=true"  >> "$GITHUB_OUTPUT" ;;
+            *)   echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          # Same pairing as ci.yml: 9.0.x for the library and tests (root
+          # global.json), 10.0.x for the example CLI (example/global.json).
+          dotnet-version: |
+            9.0.x
+            10.0.x
+
+      - name: Restore local tools (coverlet.console)
+        run: dotnet tool restore
+
+      # ---- The CI gate. Mirrors ci.yml; nothing is published unless it passes. ----
+
+      - name: Restore library solution
+        run: dotnet restore TheBleedingDeacons.Unity.Client.sln
+
+      - name: Build library solution
+        run: dotnet build TheBleedingDeacons.Unity.Client.sln --configuration Release --no-restore
+
+      - name: Verify formatting (dotnet format --verify-no-changes)
+        run: |
+          dotnet format TheBleedingDeacons.Unity.Client.sln --verify-no-changes
+          dotnet format TheBleedingDeacons.Unity.Tests/TheBleedingDeacons.Unity.Tests.csproj --verify-no-changes
+
+      - name: Build tests (Debug)
+        run: dotnet build TheBleedingDeacons.Unity.Tests/TheBleedingDeacons.Unity.Tests.csproj --configuration Debug
+
+      - name: Test
+        run: >
+          dotnet coverlet TheBleedingDeacons.Unity.Tests/bin/Debug/net9.0/TheBleedingDeacons.Unity.Tests.dll
+          --target dotnet
+          --targetargs "TheBleedingDeacons.Unity.Tests/bin/Debug/net9.0/TheBleedingDeacons.Unity.Tests.dll"
+          --format cobertura
+          --output coverage/coverage.cobertura.xml
+          --include "[TheBleedingDeacons.Unity.Client]*"
+          --include "[TheBleedingDeacons.Unity.Models]*"
+
+      - name: Verify example formatting
+        working-directory: example
+        run: dotnet format Integrity-cli/Integrity-cli.sln --verify-no-changes
+
+      - name: Build example CLI
+        working-directory: example
+        run: dotnet build Integrity-cli/Integrity-cli.sln --configuration Release
+
+      # ---- Everything above is green: build and publish the package. ----
+
+      # Packs the Client project specifically, not the solution — Models ships
+      # bundled inside this package rather than as one of its own, and the test
+      # project isn't packable.
+      - name: Pack
+        run: >
+          dotnet pack TheBleedingDeacons.Unity.Client/TheBleedingDeacons.Unity.Client.csproj
+          --configuration Release
+          -p:Version=${{ steps.version.outputs.version }}
+          -p:ContinuousIntegrationBuild=true
+          --output artifacts
+
+      - name: Push to GitHub Packages
+        run: >
+          dotnet nuget push "artifacts/*.nupkg"
+          --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+          --api-key ${{ secrets.GITHUB_TOKEN }}
+          --skip-duplicate
+
+      # The .nupkg is also attached to the Release so it can be consumed without
+      # authenticating against GitHub Packages (drop it in a local folder feed).
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          gh release create "$GITHUB_REF_NAME"
+          artifacts/*.nupkg
+          --title "$GITHUB_REF_NAME"
+          --generate-notes
+          ${{ steps.version.outputs.prerelease == 'true' && '--prerelease' || '' }}
