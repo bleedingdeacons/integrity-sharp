@@ -8,9 +8,12 @@ on:
     tags:
       - 'v*'
 
+# The bleedingdeacons org disables write permissions for workflow tokens, which
+# overrides anything requested here — GITHUB_TOKEN is read-only in this repo no
+# matter what. Both publishing steps therefore authenticate with PACKAGES_TOKEN,
+# a repository secret holding a classic PAT with `repo` + `write:packages`.
 permissions:
-  contents: write # create the GitHub Release and attach the .nupkg
-  packages: write # push the .nupkg to GitHub Packages
+  contents: read # enough for checkout; publishing does not use this token
 
 jobs:
   release:
@@ -41,6 +44,17 @@ jobs:
             *-*) echo "prerelease=true"  >> "$GITHUB_OUTPUT" ;;
             *)   echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
           esac
+
+      # Checked up front so a missing secret fails in seconds rather than after
+      # the ~2 minute build-and-test gate below.
+      - name: Check publishing credentials
+        env:
+          PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+        run: |
+          if [ -z "$PACKAGES_TOKEN" ]; then
+            echo "::error::Secret PACKAGES_TOKEN is not set. Create a classic PAT with the 'repo' and 'write:packages' scopes and add it as a repository secret named PACKAGES_TOKEN."
+            exit 1
+          fi
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -105,14 +119,16 @@ jobs:
         run: >
           dotnet nuget push "artifacts/*.nupkg"
           --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
-          --api-key ${{ secrets.GITHUB_TOKEN }}
+          --api-key ${{ secrets.PACKAGES_TOKEN }}
           --skip-duplicate
 
       # The .nupkg is also attached to the Release so it can be consumed without
       # authenticating against GitHub Packages (drop it in a local folder feed).
       - name: Create GitHub Release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Also PACKAGES_TOKEN: creating a release needs contents:write, which
+          # the read-only GITHUB_TOKEN cannot provide here.
+          GH_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
         run: >
           gh release create "$GITHUB_REF_NAME"
           artifacts/*.nupkg

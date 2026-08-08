@@ -71,6 +71,13 @@ in the csproj, so a tag and a published package can never disagree. Tags with a
 prerelease suffix (`v1.11.0-rc.1`) are marked as prereleases. Nothing publishes
 from a plain push to `main`.
 
+Publishing requires a repository secret named **`PACKAGES_TOKEN`** — a classic
+PAT with the `repo` and `write:packages` scopes. The built-in `GITHUB_TOKEN`
+cannot be used: the `bleedingdeacons` organization disables write permissions for
+workflow tokens, which overrides the `permissions:` block in the workflow, so
+both the package push and the release creation would fail with `403`. The
+workflow checks the secret is present before running the build gate.
+
 ## Usage
 
 ```csharp
