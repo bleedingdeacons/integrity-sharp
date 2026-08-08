@@ -62,6 +62,19 @@ required.
 it repeats the full CI gate (build, `dotnet format`, analyzers, tests) and
 publishes only if all of it passes.
 
+```powershell
+./scripts/release.ps1 1.10.4
+```
+
+That bumps `<Version>` in the client csproj, commits it as `release: v1.10.4`,
+tags, and pushes both — the tag push is what starts the workflow. It refuses to
+run unless the working tree is clean, `HEAD` is `main` and in sync with `origin`,
+and the tag doesn't already exist, since a published version can never be reused.
+Add `-WhatIf` to see what it would do without touching anything.
+
+The csproj therefore carries the *last released* version between releases; the
+script moves it as part of the release commit. Doing it by hand is equivalent:
+
 ```bash
 git tag v1.10.4 && git push origin v1.10.4
 ```
