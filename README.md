@@ -91,6 +91,15 @@ workflow tokens, which overrides the `permissions:` block in the workflow, so
 both the package push and the release creation would fail with `403`. The
 workflow checks the secret is present before running the build gate.
 
+| Secret | Scope | Used for | On expiry |
+| --- | --- | --- | --- |
+| `PACKAGES_TOKEN` | `repo`, `write:packages` | Pushing the package and creating the Release | The release run fails within seconds at *Check publishing credentials* |
+
+Consumers need their own **read-only** token (`read:packages`) — see
+[Installing](#installing). Don't hand out `PACKAGES_TOKEN`; it can publish.
+[register](https://github.com/bleedingdeacons/register) holds one as
+`PACKAGES_READ_TOKEN`.
+
 ## Usage
 
 ```csharp

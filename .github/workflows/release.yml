@@ -55,6 +55,18 @@ jobs:
             echo "::error::Secret PACKAGES_TOKEN is not set. Create a classic PAT with the 'repo' and 'write:packages' scopes and add it as a repository secret named PACKAGES_TOKEN."
             exit 1
           fi
+          # A revoked or expired token is still non-empty, so probe the registry
+          # too — otherwise expiry only surfaces as a 403 after the whole gate
+          # has run. 404 is fine: it means authentication succeeded and the
+          # package simply doesn't exist yet (the very first publish).
+          code=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -u "${{ github.repository_owner }}:$PACKAGES_TOKEN" \
+            https://nuget.pkg.github.com/${{ github.repository_owner }}/download/integrity.client/index.json)
+          case "$code" in
+            200|404) echo "PACKAGES_TOKEN authenticates OK (HTTP $code)" ;;
+            401|403) echo "::error::PACKAGES_TOKEN was rejected (HTTP $code) — expired, revoked, or missing the write:packages scope. Rotate it in this repository's secrets."; exit 1 ;;
+            *) echo "::warning::Unexpected HTTP $code probing GitHub Packages; continuing and letting the push report the outcome." ;;
+          esac
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
