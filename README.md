@@ -1,6 +1,7 @@
 # Integrity C# Client (`integrity-sharp`)
 
 [![CI](https://github.com/bleedingdeacons/integrity-sharp/actions/workflows/ci.yml/badge.svg)](https://github.com/bleedingdeacons/integrity-sharp/actions/workflows/ci.yml)
+[![Semgrep](https://github.com/bleedingdeacons/integrity-sharp/actions/workflows/semgrep.yml/badge.svg?branch=main)](https://github.com/bleedingdeacons/integrity-sharp/actions/workflows/semgrep.yml)
 [![Coverage Status](https://coveralls.io/repos/github/bleedingdeacons/integrity-sharp/badge.svg?branch=main)](https://coveralls.io/github/bleedingdeacons/integrity-sharp?branch=main)
 
 A C# client library for the [Integrity](https://github.com/bleedingdeacons/integrity)
