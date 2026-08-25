@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
         with:
           # 9.0.x builds the Client/Models/Tests projects (pinned via the repo
           # root global.json); 10.0.x builds the example CLI (example/Integrity-cli
@@ -70,7 +70,7 @@ jobs:
           --include "[TheBleedingDeacons.Unity.Models]*"
 
       - name: Upload coverage to Coveralls
-        uses: coverallsapp/github-action@v2
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
         with:
           # Public repo: the built-in GITHUB_TOKEN authenticates the upload,
           # so no separate Coveralls token/secret is required.
