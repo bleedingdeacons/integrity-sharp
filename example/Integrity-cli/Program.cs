@@ -353,6 +353,11 @@ if (groups.Success && groups.Data?.Count > 0)
 		AnonymousName = "Test GSR Member",
 		PersonalEmail = "test.gsr@example.com",
 		MobileNumber = "555-0100",
+		LandlineNumber = "0117 496 0000",
+
+		// Only meaningful alongside a landline: a member with only a mobile
+		// comes back as "Mobile" whatever is sent here.
+		PreferredContact = "Landline",
 		HomeGroupId = targetGroup.Id,
 		IsGsr = true,
 	}).ConfigureAwait(false);
@@ -365,6 +370,8 @@ if (groups.Success && groups.Data?.Count > 0)
 		Console.WriteLine($"  Name: {created.AnonymousName}");
 		Console.WriteLine($"  Email: {created.PersonalEmail}");
 		Console.WriteLine($"  Mobile: {created.MobileNumber}");
+		Console.WriteLine($"  Landline: {created.LandlineNumber}");
+		Console.WriteLine($"  Ring: {created.PreferredContact}");
 		Console.WriteLine($"  Home Group: {created.HomeGroupName} (ID: {created.HomeGroupId})");
 		Console.WriteLine($"  Is GSR: {created.IsGsr}");
 		Console.WriteLine($"  Updated: {Fmt(created.Updated)}");
@@ -420,6 +427,8 @@ if (positions.Success && positions.Data?.Count > 0)
 		Console.WriteLine($"  Name: {created.AnonymousName}");
 		Console.WriteLine($"  Email: {created.PersonalEmail}");
 		Console.WriteLine($"  Mobile: {created.MobileNumber}");
+		Console.WriteLine($"  Landline: {created.LandlineNumber}");
+		Console.WriteLine($"  Ring: {created.PreferredContact}");
 		Console.WriteLine($"  Position: {created.IntergroupPositionName} (ID: {created.IntergroupPositionId})");
 		Console.WriteLine($"  Updated: {Fmt(created.Updated)}");
 	}

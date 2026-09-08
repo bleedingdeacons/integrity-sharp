@@ -45,6 +45,31 @@ namespace TheBleedingDeacons.Unity.Models
 		public string MobileNumber { get; init; } = string.Empty;
 
 		/// <summary>
+		/// Gets the member's landline phone number.
+		///
+		/// <para>
+		/// Personal data on the same footing as <see cref="MobileNumber"/>:
+		/// masked by the server unless the key holds <c>members:clear</c>, and
+		/// empty against a server that pre-dates the field.
+		/// </para>
+		/// </summary>
+		public string LandlineNumber { get; init; } = string.Empty;
+
+		/// <summary>
+		/// Gets which of the member's two numbers should be rung —
+		/// <c>"Mobile"</c> or <c>"Landline"</c>.
+		///
+		/// <para>
+		/// Never masked: it names an option rather than a number. A member with
+		/// no landline is always <c>"Mobile"</c>, which the server settles, so
+		/// this can be read at face value. Left a string rather than an enum so
+		/// that a value from a newer server degrades to an unrecognised string
+		/// instead of failing to deserialize.
+		/// </para>
+		/// </summary>
+		public string PreferredContact { get; init; } = "Mobile";
+
+		/// <summary>
 		/// Gets a value indicating whether the anonymous name may be shown publicly.
 		/// </summary>
 		public bool ShowAnonymousName { get; init; }

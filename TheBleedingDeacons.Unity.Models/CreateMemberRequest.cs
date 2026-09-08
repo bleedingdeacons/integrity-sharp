@@ -28,6 +28,20 @@ namespace TheBleedingDeacons.Unity.Models
 		public string? MobileNumber { get; init; }
 
 		/// <summary>
+		/// The member's landline phone number.
+		/// </summary>
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+		public string? LandlineNumber { get; init; }
+
+		/// <summary>
+		/// Which of the member's two numbers should be rung — <c>"Mobile"</c>
+		/// or <c>"Landline"</c>. The server rejects anything else, and ignores
+		/// it entirely for a member with no landline.
+		/// </summary>
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+		public string? PreferredContact { get; init; }
+
+		/// <summary>
 		/// The home group ID — set when creating a GSR member for a group.
 		/// </summary>
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

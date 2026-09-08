@@ -282,6 +282,8 @@ public class ModelDeserializationTests
 		{
 			"anonymous_name": "Jane R",
 			"mobile_number": "0700 900000",
+			"landline_number": "0117 496 0000",
+			"preferred_contact": "Landline",
 			"intergroup_position_id": 9,
 			"intergroup_position_rotation": "2026-09-01"
 		}
@@ -292,7 +294,72 @@ public class ModelDeserializationTests
 		Assert.NotNull(request);
 		Assert.Equal("Jane R", request!.AnonymousName);
 		Assert.Equal("0700 900000", request.MobileNumber);
+		Assert.Equal("0117 496 0000", request.LandlineNumber);
+		Assert.Equal("Landline", request.PreferredContact);
 		Assert.Equal(9, request.IntergroupPositionId);
 		Assert.Equal("2026-09-01", request.IntergroupPositionRotation);
+	}
+
+	[Fact]
+	public void Member_ReadsTheLandlineAndPreferredContact()
+	{
+		const string Json = """
+		{
+			"id": 7,
+			"anonymous_name": "Jane R",
+			"mobile_number": "0700 900000",
+			"landline_number": "0117 496 0000",
+			"preferred_contact": "Landline"
+		}
+		""";
+
+		var member = JsonSerializer.Deserialize<Member>(Json, Options);
+
+		Assert.NotNull(member);
+		Assert.Equal("0117 496 0000", member!.LandlineNumber);
+		Assert.Equal("Landline", member.PreferredContact);
+	}
+
+	/// <summary>
+	/// A server that pre-dates these fields omits them entirely. Both defaults
+	/// match what such a server would have meant: no landline, and therefore
+	/// nothing to ring but the mobile.
+	/// </summary>
+	[Fact]
+	public void Member_DefaultsTheContactFieldsWhenTheServerOmitsThem()
+	{
+		const string Json = """
+		{
+			"id": 7,
+			"anonymous_name": "Jane R",
+			"mobile_number": "0700 900000"
+		}
+		""";
+
+		var member = JsonSerializer.Deserialize<Member>(Json, Options);
+
+		Assert.NotNull(member);
+		Assert.Equal(string.Empty, member!.LandlineNumber);
+		Assert.Equal("Mobile", member.PreferredContact);
+	}
+
+	/// <summary>
+	/// PreferredContact is a string rather than an enum precisely so that a
+	/// value this build has never heard of arrives intact instead of throwing.
+	/// </summary>
+	[Fact]
+	public void Member_AcceptsAnUnrecognisedPreferredContactWithoutThrowing()
+	{
+		const string Json = """
+		{
+			"id": 7,
+			"preferred_contact": "Satellite"
+		}
+		""";
+
+		var member = JsonSerializer.Deserialize<Member>(Json, Options);
+
+		Assert.NotNull(member);
+		Assert.Equal("Satellite", member!.PreferredContact);
 	}
 }

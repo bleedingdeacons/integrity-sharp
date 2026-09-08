@@ -499,7 +499,9 @@ public class UnityRestSharpTests : IDisposable
 		var updateRequest = new UpdateMemberRequest
 		{
 			AnonymousName = "Updated Bob",
-			MobileNumber = "555-1234"
+			MobileNumber = "555-1234",
+			LandlineNumber = "0117 496 0000",
+			PreferredContact = "Landline"
 		};
 
 		var result = await _client.UpdateMemberAsync(5, updateRequest);
@@ -517,6 +519,32 @@ public class UnityRestSharpTests : IDisposable
 		var body = await _mockHandler.LastRequest.Content!.ReadAsStringAsync();
 		Assert.True(body.Contains("anonymous_name", StringComparison.Ordinal));
 		Assert.True(body.Contains("Updated Bob", StringComparison.Ordinal));
+
+		// Both new fields go out under the snake_case names the API expects.
+		Assert.True(body.Contains("landline_number", StringComparison.Ordinal));
+		Assert.True(body.Contains("preferred_contact", StringComparison.Ordinal));
+		Assert.True(body.Contains("Landline", StringComparison.Ordinal));
+	}
+
+	/// <summary>
+	/// Every property on the request is null-ignored, so a partial update that
+	/// says nothing about the two contact fields must not send them — an
+	/// omitted field is what tells the server to leave it alone.
+	/// </summary>
+	[Fact]
+	public async Task UpdateMemberAsync_Should_Omit_Unset_Contact_Fields()
+	{
+		_mockHandler.SetupResponse("/members/5/update", HttpStatusCode.OK, new
+		{
+			success = true,
+			data = new { id = 5, anonymous_name = "Updated Bob" }
+		});
+
+		await _client.UpdateMemberAsync(5, new UpdateMemberRequest { AnonymousName = "Updated Bob" });
+
+		var body = await _mockHandler.LastRequest!.Content!.ReadAsStringAsync();
+		Assert.False(body.Contains("landline_number", StringComparison.Ordinal));
+		Assert.False(body.Contains("preferred_contact", StringComparison.Ordinal));
 	}
 
 	[Fact]
