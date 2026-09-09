@@ -18,6 +18,7 @@ public sealed class UnityRestSharp : IDisposable
 	private readonly HttpClient _httpClient;
 	private readonly string _baseUrl;
 	private readonly string _apiKey;
+	private readonly string? _hostHeader;
 	private readonly JsonSerializerOptions _jsonOptions;
 	private bool _disposed;
 	private readonly bool _httpClientSupplied;
@@ -50,21 +51,25 @@ public sealed class UnityRestSharp : IDisposable
 		_apiKey = apiKey;
 		_httpClient = httpClient ?? new HttpClient();
 
-		// All request headers (Authorization, X-API-Key, Accept, User-Agent) are
-		// stamped onto every outgoing HttpRequestMessage via ApplyRequestHeaders()
-		// rather than set as defaults on the HttpClient. This guarantees that
-		// constructing UnityRestSharp against a shared HttpClient is idempotent
-		// and that headers cannot accumulate or conflict across constructions.
+		// All request headers — Authorization, X-API-Key, Accept, User-Agent
+		// and Host — are stamped onto every outgoing HttpRequestMessage via
+		// ApplyRequestHeaders() rather than set as defaults on the HttpClient.
+		// This guarantees that constructing UnityRestSharp against a shared
+		// HttpClient is idempotent and that headers cannot accumulate or
+		// conflict across constructions.
 		//
-		// The one exception is the Host header below: it is a single-value
-		// setter (assignment, not add) so it cannot accumulate, and some WAFs
-		// require it set explicitly rather than relying on auto-derivation.
-		if (Uri.TryCreate(_baseUrl, UriKind.Absolute, out var baseUri))
-		{
-			_httpClient.DefaultRequestHeaders.Host = baseUri.IsDefaultPort
-				? baseUri.Host
-				: $"{baseUri.Host}:{baseUri.Port}";
-		}
+		// Host is no longer the exception it used to be. Some WAFs want it set
+		// explicitly rather than auto-derived, which is the reason it is set at
+		// all — but DefaultRequestHeaders.Host pins the value for every request
+		// that client makes for the rest of its life, including requests issued
+		// by unrelated components handed the same injected instance. Construct
+		// two clients against different base URLs on one shared HttpClient and
+		// the last one constructed silently wins for both, intermittently and
+		// according to DI registration order. So it is resolved once here and
+		// applied per-request, scoped to calls this client actually makes.
+		_hostHeader = Uri.TryCreate(_baseUrl, UriKind.Absolute, out var baseUri)
+			? (baseUri.IsDefaultPort ? baseUri.Host : $"{baseUri.Host}:{baseUri.Port}")
+			: null;
 
 		// Configure JSON options
 		_jsonOptions = new JsonSerializerOptions
@@ -805,6 +810,12 @@ public sealed class UnityRestSharp : IDisposable
 		// Remove any pre-existing X-API-Key (e.g. from a shared HttpClient) before adding ours.
 		request.Headers.Remove("X-API-Key");
 		request.Headers.Add("X-API-Key", _apiKey);
+
+		if (_hostHeader is not null)
+		{
+			request.Headers.Host = _hostHeader;
+		}
+
 		request.Headers.Accept.Clear();
 		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 		request.Headers.UserAgent.Clear();
