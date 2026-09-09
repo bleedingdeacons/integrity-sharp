@@ -18,7 +18,7 @@ public sealed class UnityRestSharp : IDisposable
 	private readonly HttpClient _httpClient;
 	private readonly string _baseUrl;
 	private readonly string _apiKey;
-	private readonly string? _hostHeader;
+	private readonly string _hostHeader;
 	private readonly JsonSerializerOptions _jsonOptions;
 	private bool _disposed;
 	private readonly bool _httpClientSupplied;
@@ -29,16 +29,31 @@ public sealed class UnityRestSharp : IDisposable
 	private const int MaxRetryAttempts = 5;
 	private static readonly TimeSpan InitialRetryDelay = TimeSpan.FromMilliseconds(500);
 	private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(8);
-	private static readonly Random RetryJitter = new();
 
 	/// <summary>
 	/// Creates a new Integrity API client.
 	/// </summary>
-	/// <param name="baseUrl">The WordPress site URL (e.g., "https://example.com").</param>
+	/// <param name="baseUrl">The WordPress site URL (e.g., "https://example.com"). Must be absolute and HTTPS.</param>
 	/// <param name="apiKey">Your Integrity API key.</param>
 	/// <param name="httpClient">Optional HttpClient instance for dependency injection.</param>
 	/// <param name="logger">Optional ILogger instance for structured logging.</param>
-	public UnityRestSharp(string baseUrl, string apiKey, HttpClient? httpClient = null, ILogger<UnityRestSharp>? logger = null)
+	/// <param name="allowInsecureBaseUrl">
+	/// Permit a plaintext <c>http://</c> base. False by default, and worth
+	/// leaving that way: the API key goes out on every request twice, as an
+	/// Authorization Bearer header and as X-API-Key, so an http:// base puts
+	/// it on the wire in the clear. Set this only for local development
+	/// against a site that has no certificate.
+	/// </param>
+	/// <exception cref="ArgumentException">
+	/// <paramref name="baseUrl"/> is not an absolute URL, or is not HTTPS and
+	/// <paramref name="allowInsecureBaseUrl"/> was not set.
+	/// </exception>
+	public UnityRestSharp(
+		string baseUrl,
+		string apiKey,
+		HttpClient? httpClient = null,
+		ILogger<UnityRestSharp>? logger = null,
+		bool allowInsecureBaseUrl = false)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(baseUrl);
 		ArgumentException.ThrowIfNullOrWhiteSpace(apiKey);
@@ -50,6 +65,42 @@ public sealed class UnityRestSharp : IDisposable
 		_baseUrl = baseUrl.TrimEnd('/');
 		_apiKey = apiKey;
 		_httpClient = httpClient ?? new HttpClient();
+
+		// The base URL is parsed here and the result gates construction.
+		//
+		// It used to be parsed only to derive the Host header, and what came
+		// back was never checked: a file://, ftp:// or plain http:// base was
+		// accepted and used to build every request URL. That is what let the
+		// bundled example ship an API key over cleartext without anything in
+		// this library objecting. A configuration that cannot be secure is now
+		// a startup error rather than a quiet downgrade.
+		if (!Uri.TryCreate(_baseUrl, UriKind.Absolute, out var baseUri))
+		{
+			throw new ArgumentException(
+				$"Base URL must be an absolute URL, e.g. \"https://example.com\". Got: \"{baseUrl}\".",
+				nameof(baseUrl));
+		}
+
+		// Uri.Scheme is always lower-cased by the parser, so Ordinal is the
+		// right comparison here.
+		var insecure = allowInsecureBaseUrl
+			&& string.Equals(baseUri.Scheme, Uri.UriSchemeHttp, StringComparison.Ordinal);
+
+		if (!string.Equals(baseUri.Scheme, Uri.UriSchemeHttps, StringComparison.Ordinal) && !insecure)
+		{
+			throw new ArgumentException(
+				$"Base URL must be HTTPS. Got scheme \"{baseUri.Scheme}\". "
+				+ "Pass allowInsecureBaseUrl: true to permit http:// for local development.",
+				nameof(baseUrl));
+		}
+
+		if (insecure)
+		{
+			_logger.LogWarning(
+				"Integrity API client configured against a plaintext base URL ({BaseUrl}). "
+				+ "The API key is sent in the clear on every request.",
+				_baseUrl);
+		}
 
 		// All request headers — Authorization, X-API-Key, Accept, User-Agent
 		// and Host — are stamped onto every outgoing HttpRequestMessage via
@@ -67,9 +118,9 @@ public sealed class UnityRestSharp : IDisposable
 		// the last one constructed silently wins for both, intermittently and
 		// according to DI registration order. So it is resolved once here and
 		// applied per-request, scoped to calls this client actually makes.
-		_hostHeader = Uri.TryCreate(_baseUrl, UriKind.Absolute, out var baseUri)
-			? (baseUri.IsDefaultPort ? baseUri.Host : $"{baseUri.Host}:{baseUri.Port}")
-			: null;
+		_hostHeader = baseUri.IsDefaultPort
+			? baseUri.Host
+			: $"{baseUri.Host}:{baseUri.Port}";
 
 		// Configure JSON options
 		_jsonOptions = new JsonSerializerOptions
@@ -511,7 +562,7 @@ public sealed class UnityRestSharp : IDisposable
 					var headers = FormatHeaders(response.Headers);
 					var contentHeaders = FormatHeaders(response.Content.Headers);
 					_logger.LogWarning("403 Forbidden on GET {Url}. Response headers:\n{Headers}\nContent headers:\n{ContentHeaders}\nBody:\n{Body}",
-						url, headers, contentHeaders, errBody);
+						url, headers, contentHeaders, TruncateForLog(errBody));
 				}
 
 				return null;
@@ -811,10 +862,7 @@ public sealed class UnityRestSharp : IDisposable
 		request.Headers.Remove("X-API-Key");
 		request.Headers.Add("X-API-Key", _apiKey);
 
-		if (_hostHeader is not null)
-		{
-			request.Headers.Host = _hostHeader;
-		}
+		request.Headers.Host = _hostHeader;
 
 		request.Headers.Accept.Clear();
 		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -884,7 +932,7 @@ public sealed class UnityRestSharp : IDisposable
 						var contentHeaders = FormatHeaders(response.Content.Headers);
 						_logger.LogWarning(
 							"403 HTML response on {Method} {Url} attempt {Attempt}/{Max}. Response headers:\n{Headers}\nContent headers:\n{ContentHeaders}\nBody:\n{Body}",
-							method, url, attempt, MaxRetryAttempts, headers, contentHeaders, htmlBody);
+							method, url, attempt, MaxRetryAttempts, headers, contentHeaders, TruncateForLog(htmlBody));
 					}
 					catch (Exception bodyEx)
 					{
@@ -986,13 +1034,42 @@ public sealed class UnityRestSharp : IDisposable
 		}));
 	}
 
+	// Whether a 403 came from a WAF or upstream web server rather than the API
+	// itself. A WAF block page is HTML and is worth retrying; a real API 403 is
+	// an auth or permission answer, is JSON, and must not be.
+	//
+	// A missing Content-Type used to return true, on the reasoning that an
+	// absent header is suspicious. That is the expensive way to be wrong: it
+	// classified a genuine permission failure served without a Content-Type as
+	// a WAF page, so the client retried it five times, with backoff, and wrote
+	// its body to the log on every attempt. Fail fast instead — a WAF that
+	// serves no Content-Type at all loses one retry it would probably not have
+	// been helped by.
 	private static bool IsLikelyWafHtml(HttpResponseMessage response)
 	{
 		var contentType = response.Content.Headers.ContentType?.MediaType;
-		if (string.IsNullOrEmpty(contentType)) return true; // missing CT — treat as suspicious
+		if (string.IsNullOrEmpty(contentType)) return false;
 		if (contentType.Contains("html", StringComparison.OrdinalIgnoreCase)) return true;
 		if (contentType.Contains("json", StringComparison.OrdinalIgnoreCase)) return false;
 		return true;
+	}
+
+	// Error bodies are logged to diagnose what a WAF or an API is saying, and
+	// both can be arbitrarily long. Header redaction keeps credentials out of
+	// the log; this keeps the volume down, which matters because the retry path
+	// logs the same body once per attempt.
+	private const int MaxLoggedBodyChars = 1024;
+
+	private static string TruncateForLog(string body)
+	{
+		if (string.IsNullOrEmpty(body) || body.Length <= MaxLoggedBodyChars)
+		{
+			return body;
+		}
+
+		return string.Concat(
+			body.AsSpan(0, MaxLoggedBodyChars),
+			$"… [truncated, {body.Length} chars total]");
 	}
 
 	private static TimeSpan? GetRetryAfter(HttpResponseMessage response)
@@ -1014,11 +1091,13 @@ public sealed class UnityRestSharp : IDisposable
 		// Exponential backoff: 0.5s, 1s, 2s, 4s, 8s — capped — plus 0–250ms jitter.
 		var exp = InitialRetryDelay.TotalMilliseconds * Math.Pow(2, attempt - 1);
 		var capped = Math.Min(exp, MaxRetryDelay.TotalMilliseconds);
-		int jitter;
-		lock (RetryJitter)
-		{
-			jitter = RetryJitter.Next(0, 250);
-		}
+
+		// Random.Shared rather than a shared instance behind a lock. The old
+		// arrangement was correct — every read was inside lock (RetryJitter) —
+		// but Random.Shared is thread-safe in its own right, so the lock was
+		// buying nothing except contention on the one code path that runs when
+		// the server is already struggling.
+		var jitter = Random.Shared.Next(0, 250);
 
 		return TimeSpan.FromMilliseconds(capped + jitter);
 	}

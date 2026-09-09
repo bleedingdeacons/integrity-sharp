@@ -66,6 +66,40 @@ public class UnityRestSharpTests : IDisposable
 			new UnityRestSharp(BaseUrl, "   "));
 	}
 
+	[Theory]
+	[InlineData("test.example.com")]
+	[InlineData("/wp-json")]
+	public void Constructor_Should_Throw_When_BaseUrl_Is_Not_Absolute(string baseUrl) =>
+		Assert.Throws<ArgumentException>(() => new UnityRestSharp(baseUrl, ApiKey));
+
+	// The base URL used to be parsed only to derive the Host header, and what
+	// came back gated nothing — so http://, ftp:// and file:// were all accepted
+	// and used to build every request URL. The bundled example shipped an API
+	// key over cleartext on exactly that path.
+	[Theory]
+	[InlineData("http://test.example.com")]
+	[InlineData("ftp://test.example.com")]
+	[InlineData("file:///c:/tmp")]
+	public void Constructor_Should_Throw_When_BaseUrl_Is_Not_Https(string baseUrl) =>
+		Assert.Throws<ArgumentException>(() => new UnityRestSharp(baseUrl, ApiKey));
+
+	[Fact]
+	public void Constructor_Should_Accept_Http_When_Insecure_Is_Opted_Into()
+	{
+		using var client = new UnityRestSharp("http://test.example.com", ApiKey, allowInsecureBaseUrl: true);
+
+		Assert.NotNull(client);
+	}
+
+	/// <summary>
+	/// The opt-in is for plaintext HTTP and nothing else. A file:// or ftp://
+	/// base is a mistake in any build.
+	/// </summary>
+	[Fact]
+	public void Constructor_Should_Still_Refuse_A_NonHttp_Scheme_When_Insecure_Is_Opted_Into() =>
+		Assert.Throws<ArgumentException>(() =>
+			new UnityRestSharp("ftp://test.example.com", ApiKey, allowInsecureBaseUrl: true));
+
 	// Headers (Authorization, Accept, User-Agent) are stamped onto every
 	// outgoing request via ApplyRequestHeaders() rather than set as defaults on
 	// the HttpClient, so the client can share an HttpClient without header
@@ -974,6 +1008,30 @@ public class UnityRestSharpTests : IDisposable
 	#endregion
 
 	#region Error Handling
+
+	/// <summary>
+	/// A 403 served without a Content-Type is a permission answer as far as
+	/// this client is concerned, and must fail fast.
+	///
+	/// <para>It used to be classified as a likely WAF page — "missing CT, treat
+	/// as suspicious" — so a genuine permission failure was retried five times
+	/// with backoff, and its body written to the log on every attempt.</para>
+	/// </summary>
+	[Fact]
+	public async Task A_403_With_No_ContentType_Should_Not_Be_Retried()
+	{
+		_mockHandler.SetupResponse(
+			"/groups",
+			HttpStatusCode.Forbidden,
+			"""{"success":false,"error":{"code":"forbidden","message":"Not allowed"}}""",
+			contentType: null);
+
+		var result = await _client.GetGroupsAsync();
+
+		Assert.False(result.Success);
+		Assert.Equal(403, result.StatusCode);
+		Assert.Single(_mockHandler.CapturedRequests);
+	}
 
 	[Fact]
 	public async Task GetGroupsAsync_Should_Handle_401_Unauthorized()
