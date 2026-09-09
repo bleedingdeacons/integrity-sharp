@@ -1005,6 +1005,37 @@ public class UnityRestSharpTests : IDisposable
 		Assert.Null(result);
 	}
 
+	/// <summary>
+	/// A 403 has its body logged so a WAF page can be diagnosed, and both a
+	/// WAF page and an API error body can be arbitrarily long. Header
+	/// redaction keeps credentials out of the log; this keeps the volume
+	/// down, which matters because the retry path logs the same body once
+	/// per attempt.
+	/// </summary>
+	[Fact]
+	public async Task CheckHealthAsync_Should_Truncate_A_Long_403_Body()
+	{
+		var logger = new CapturingLogger<UnityRestSharp>();
+		using var handler = new MockHttpMessageHandler();
+		using var httpClient = new HttpClient(handler);
+		using var client = new UnityRestSharp(BaseUrl, ApiKey, httpClient, logger);
+
+		var padding = new string('x', 4096);
+		handler.SetupResponse(
+			"/health",
+			HttpStatusCode.Forbidden,
+			"{\"success\":false,\"error\":{\"code\":\"forbidden\",\"message\":\"" + padding + "\"}}");
+
+		var result = await client.CheckHealthAsync();
+
+		Assert.Null(result);
+
+		var bodyLog = Assert.Single(logger.Messages, m => m.Contains("403 Forbidden on GET", StringComparison.Ordinal));
+
+		Assert.Contains("[truncated,", bodyLog, StringComparison.Ordinal);
+		Assert.DoesNotContain(padding, bodyLog, StringComparison.Ordinal);
+	}
+
 	#endregion
 
 	#region Error Handling
