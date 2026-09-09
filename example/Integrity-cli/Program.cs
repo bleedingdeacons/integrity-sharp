@@ -5,9 +5,31 @@ Console.WriteLine("Integrity CLI");
 
 static string Fmt(DateTime? dt) => dt?.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
 
-using var client = new UnityRestSharp(
-	"http://unity-dev.local/",
-	"int_920a465e8511933de0efd9bc85225c04febd4dc44a73dd829e63523ea89e127b");
+// Where this sample points and what it authenticates with both come from the
+// environment. Nothing here is a default: the base URL and the key are read at
+// startup and the program stops if either is missing.
+//
+// This file previously carried a literal key, and two distinct live keys are in
+// its git history because of it. A credential typed into a tracked file in a
+// public repository is a published credential, and deleting the line afterwards
+// does not unpublish it.
+//
+//   PowerShell:  $env:INTEGRITY_BASE_URL = 'https://your-site.example/'
+//                $env:INTEGRITY_API_KEY  = 'int_...'
+//   bash:        export INTEGRITY_BASE_URL='https://your-site.example/'
+//                export INTEGRITY_API_KEY='int_...'
+var baseUrl = Environment.GetEnvironmentVariable("INTEGRITY_BASE_URL");
+var apiKey = Environment.GetEnvironmentVariable("INTEGRITY_API_KEY");
+
+if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
+{
+	Console.Error.WriteLine(
+		"Set INTEGRITY_BASE_URL and INTEGRITY_API_KEY before running this sample.");
+
+	return 1;
+}
+
+using var client = new UnityRestSharp(baseUrl, apiKey);
 
 // Health Check
 var status = await client.CheckHealthAsync().ConfigureAwait(false);
@@ -788,3 +810,5 @@ else
 Console.WriteLine();
 
 Console.WriteLine("Done!");
+
+return 0;

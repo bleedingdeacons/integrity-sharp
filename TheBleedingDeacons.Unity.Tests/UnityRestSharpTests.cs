@@ -117,6 +117,34 @@ public class UnityRestSharpTests : IDisposable
 		Assert.True(userAgent.Contains("IntegrityClient/1.0", StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public async Task Request_Should_Set_Host_Header()
+	{
+		SetupEmptyGroupsResponse();
+
+		await _client.GetGroupsAsync();
+
+		Assert.Equal("test.example.com", _mockHandler.LastRequest!.Headers.Host);
+	}
+
+	// Host used to be set on HttpClient.DefaultRequestHeaders, which pinned it
+	// for every request that client made for the rest of its life — including
+	// requests issued by unrelated components handed the same injected
+	// instance. Two clients on one HttpClient and the last one constructed
+	// silently won for both.
+	[Fact]
+	public async Task Constructor_Should_Not_Pin_Host_On_A_Shared_HttpClient()
+	{
+		using var other = new UnityRestSharp("https://other.example.com", ApiKey, _httpClient);
+
+		Assert.Null(_httpClient.DefaultRequestHeaders.Host);
+
+		SetupEmptyGroupsResponse();
+		await _client.GetGroupsAsync();
+
+		Assert.Equal("test.example.com", _mockHandler.LastRequest!.Headers.Host);
+	}
+
 	#endregion
 
 	#region Groups - GET /groups
