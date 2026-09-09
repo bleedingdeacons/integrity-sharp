@@ -6,6 +6,14 @@ on:
   pull_request:
     branches: [main]
 
+# Declared rather than inherited. Every other workflow in this repository and
+# its siblings narrows the token this way; this one alone took the repository
+# or organisation default, which on older repositories is read/write across
+# scopes. Nothing here needs to write, and the publishing steps in release.yml
+# authenticate with PACKAGES_TOKEN rather than GITHUB_TOKEN.
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest

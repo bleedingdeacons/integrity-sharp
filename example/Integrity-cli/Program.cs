@@ -18,8 +18,16 @@ static string Fmt(DateTime? dt) => dt?.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", 
 //                $env:INTEGRITY_API_KEY  = 'int_...'
 //   bash:        export INTEGRITY_BASE_URL='https://your-site.example/'
 //                export INTEGRITY_API_KEY='int_...'
+//
+// The base must be HTTPS. Set INTEGRITY_ALLOW_PLAINTEXT=1 to permit http://
+// against a local site with no certificate — it sends the API key in the clear
+// on every request, which is how two keys ended up in this repo's history.
 var baseUrl = Environment.GetEnvironmentVariable("INTEGRITY_BASE_URL");
 var apiKey = Environment.GetEnvironmentVariable("INTEGRITY_API_KEY");
+var allowPlaintext = string.Equals(
+	Environment.GetEnvironmentVariable("INTEGRITY_ALLOW_PLAINTEXT"),
+	"1",
+	StringComparison.Ordinal);
 
 if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
 {
@@ -29,7 +37,7 @@ if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
 	return 1;
 }
 
-using var client = new UnityRestSharp(baseUrl, apiKey);
+using var client = new UnityRestSharp(baseUrl, apiKey, allowInsecureBaseUrl: allowPlaintext);
 
 // Health Check
 var status = await client.CheckHealthAsync().ConfigureAwait(false);
