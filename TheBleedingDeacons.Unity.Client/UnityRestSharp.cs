@@ -537,6 +537,28 @@ public sealed class UnityRestSharp : IDisposable
 
 	#endregion
 
+	#region Batch
+
+	/// <summary>
+	/// Starts a batch of write requests to send in one HTTP call through
+	/// WordPress core's <c>/wp-json/batch/v1</c>. See <see cref="IntegrityBatch"/>.
+	/// Requires the batch support added in the Integrity plugin's 2.1 release.
+	/// </summary>
+	/// <param name="requireAllValid">
+	/// Run nothing unless every request passes the server's argument validation.
+	/// </param>
+	/// <param name="maxSize">
+	/// The site's batch limit. Integrity sets 256; lower this only if the site
+	/// overrides that with the <c>rest_get_max_batch_size</c> filter.
+	/// </param>
+	/// <returns>An empty batch bound to this client.</returns>
+	public IntegrityBatch CreateBatch(bool requireAllValid = false, int maxSize = IntegrityBatch.DefaultMaxSize)
+	{
+		return new IntegrityBatch(this, requireAllValid, maxSize);
+	}
+
+	#endregion
+
 	#region Health
 
 	/// <summary>
@@ -844,6 +866,290 @@ public sealed class UnityRestSharp : IDisposable
 				},
 				StatusCode = statusCode
 			};
+		}
+	}
+
+	/// <summary>
+	/// Sends queued batch operations to <c>/wp-json/batch/v1</c>. Called by
+	/// <see cref="IntegrityBatch.SendAsync"/>.
+	/// </summary>
+	/// <param name="operations">The queued requests, in order.</param>
+	/// <param name="requireAllValid">Ask core to run nothing unless every request validates.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>The per-request results.</returns>
+	internal async Task<BatchResponse> SendBatchAsync(
+		IReadOnlyList<BatchOperation> operations,
+		bool requireAllValid,
+		CancellationToken cancellationToken)
+	{
+		if (operations.Count == 0)
+			return new BatchResponse { Success = true };
+
+		var url = $"{_baseUrl}/wp-json/batch/v1";
+		int statusCode = 0;
+		string? contentSnippet = null;
+
+		_logger.LogDebug("POST {Url} with {Count} batched request(s)", url, operations.Count);
+
+		try
+		{
+			// Core builds each sub-request from this body alone. The API key
+			// travels once, on the batch itself, and the server applies it to
+			// every sub-request that does not name its own.
+			var payload = new
+			{
+				validation = requireAllValid ? "require-all-validate" : "normal",
+				requests = operations.Select(op => new
+				{
+					method = "POST",
+					path = "/integrity/v1" + op.Path,
+					body = JsonSerializer.SerializeToElement(op.Payload, op.Payload.GetType(), _jsonOptions),
+				}).ToList(),
+			};
+
+			var serializedPayload = JsonSerializer.Serialize(payload, _jsonOptions);
+
+			using var response = await SendWithRetryAsync(
+				() => ApplyRequestHeaders(new HttpRequestMessage(HttpMethod.Post, url)
+				{
+					Content = new StringContent(serializedPayload, System.Text.Encoding.UTF8, "application/json")
+				}),
+				"POST", url, cancellationToken).ConfigureAwait(false);
+			statusCode = (int)response.StatusCode;
+			var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+			contentSnippet = content.Length > 500 ? content[..500] : content;
+
+			var trimmed = content.TrimStart();
+			if (trimmed.Length == 0 || trimmed[0] != '{')
+			{
+				return new BatchResponse
+				{
+					Success = false,
+					StatusCode = statusCode,
+					Error = new ApiError
+					{
+						Code = "unexpected_response",
+						Message = $"HTTP {statusCode} from POST {url} — expected JSON but response starts with: {contentSnippet}"
+					}
+				};
+			}
+
+			using var document = JsonDocument.Parse(content);
+			var root = document.RootElement;
+
+			// Anything but a 207 with a responses array means the batch as a
+			// whole was refused (e.g. more requests than the server's limit).
+			if (root.ValueKind != JsonValueKind.Object
+				|| !root.TryGetProperty("responses", out var responsesElement)
+				|| responsesElement.ValueKind != JsonValueKind.Array)
+			{
+				_logger.LogWarning(
+					"HTTP {StatusCode} on POST {Url}: batch refused. Body:\n{Body}",
+					statusCode, url, TruncateForLog(content));
+
+				return new BatchResponse
+				{
+					Success = false,
+					StatusCode = statusCode,
+					Error = ReadError(root) ?? new ApiError
+					{
+						Code = "unknown_error",
+						Message = $"HTTP {statusCode}: {response.ReasonPhrase}"
+					}
+				};
+			}
+
+			var validationFailed = root.TryGetProperty("failed", out var failed)
+				&& failed.ValueKind == JsonValueKind.String
+				&& string.Equals(failed.GetString(), "validation", StringComparison.Ordinal);
+
+			var responseCount = responsesElement.GetArrayLength();
+			var items = new List<BatchItemResponse?>(operations.Count);
+			var allSucceeded = !validationFailed;
+
+			for (var i = 0; i < operations.Count; i++)
+			{
+				var item = i < responseCount
+					? ParseBatchItem(responsesElement[i], operations[i].DataType)
+					: null;
+				allSucceeded = allSucceeded && item is { Success: true };
+				items.Add(item);
+			}
+
+			_logger.LogDebug(
+				"POST {Url} completed with HTTP {StatusCode}: {Succeeded}/{Count} succeeded",
+				url, statusCode, items.Count(r => r is { Success: true }), operations.Count);
+
+			return new BatchResponse
+			{
+				Success = allSucceeded,
+				ValidationFailed = validationFailed,
+				Responses = items,
+				StatusCode = statusCode
+			};
+		}
+		catch (HttpRequestException ex)
+		{
+			_logger.LogError(ex, "Network error on POST {Url}", url);
+			return new BatchResponse
+			{
+				Success = false,
+				Error = new ApiError { Code = "network_error", Message = $"POST {url} failed: {ex.Message}" },
+				StatusCode = 0
+			};
+		}
+		catch (JsonException ex)
+		{
+			_logger.LogError(ex, "JSON parse error on POST {Url}, HTTP {StatusCode}", url, statusCode);
+			return new BatchResponse
+			{
+				Success = false,
+				Error = new ApiError
+				{
+					Code = "parse_error",
+					Message = $"POST {url} returned HTTP {statusCode} — JSON parse failed: {ex.Message}. Response starts with: {contentSnippet}"
+				},
+				StatusCode = statusCode
+			};
+		}
+	}
+
+	/// <summary>
+	/// Reads one entry of a batch's <c>responses</c> array — core's envelope of
+	/// <c>{ body, status, headers }</c> — into a <see cref="BatchItemResponse"/>.
+	/// </summary>
+	private BatchItemResponse? ParseBatchItem(JsonElement item, Type dataType)
+	{
+		if (item.ValueKind != JsonValueKind.Object)
+			return null;
+
+		var status = item.TryGetProperty("status", out var statusElement) && statusElement.TryGetInt32(out var parsedStatus)
+			? parsedStatus
+			: 0;
+
+		var rateLimit = item.TryGetProperty("headers", out var headers) && headers.ValueKind == JsonValueKind.Object
+			? ReadBatchRateLimit(headers)
+			: null;
+
+		if (!item.TryGetProperty("body", out var body) || body.ValueKind != JsonValueKind.Object)
+		{
+			return new BatchItemResponse
+			{
+				Success = false,
+				StatusCode = status,
+				RateLimit = rateLimit,
+				Error = new ApiError
+				{
+					Code = "unexpected_response",
+					Message = $"Batched request returned HTTP {status} without a JSON object body"
+				}
+			};
+		}
+
+		var success = body.TryGetProperty("success", out var successElement)
+			&& successElement.ValueKind == JsonValueKind.True;
+
+		if (!success)
+		{
+			return new BatchItemResponse
+			{
+				Success = false,
+				StatusCode = status,
+				RateLimit = rateLimit,
+				Error = ReadError(body) ?? new ApiError { Code = "unknown_error", Message = $"HTTP {status}" }
+			};
+		}
+
+		var data = body.TryGetProperty("data", out var dataElement) && dataElement.ValueKind != JsonValueKind.Null
+			? dataElement.Deserialize(dataType, _jsonOptions)
+			: null;
+
+		return new BatchItemResponse
+		{
+			Success = true,
+			Data = data,
+			StatusCode = status,
+			RateLimit = rateLimit
+		};
+	}
+
+	/// <summary>
+	/// Reads an error from either shape the server uses: Integrity's own
+	/// <c>{ success, error: { code, message } }</c>, or WordPress's
+	/// <c>{ code, message, data }</c> — which is what a permission refusal and
+	/// any error raised by core inside a batch look like.
+	/// </summary>
+	private static ApiError? ReadError(JsonElement body)
+	{
+		if (body.ValueKind != JsonValueKind.Object)
+			return null;
+
+		var source = body.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.Object
+			? error
+			: body;
+
+		var code = ReadString(source, "code");
+		var message = ReadString(source, "message");
+
+		if (code is null && message is null)
+			return null;
+
+		return new ApiError { Code = code ?? "unknown_error", Message = message ?? string.Empty };
+	}
+
+	private static string? ReadString(JsonElement element, string propertyName)
+	{
+		return element.TryGetProperty(propertyName, out var value) && value.ValueKind == JsonValueKind.String
+			? value.GetString()
+			: null;
+	}
+
+	/// <summary>
+	/// Reads the rate-limit headers carried in a batch entry. Core serializes a
+	/// sub-response's headers as a JSON object whose values may be numbers,
+	/// strings or arrays, so each is read leniently.
+	/// </summary>
+	private static RateLimitInfo? ReadBatchRateLimit(JsonElement headers)
+	{
+		long? limit = null;
+		long? remaining = null;
+		long? reset = null;
+
+		foreach (var header in headers.EnumerateObject())
+		{
+			if (string.Equals(header.Name, "X-RateLimit-Limit", StringComparison.OrdinalIgnoreCase))
+				limit = ReadHeaderNumber(header.Value);
+			else if (string.Equals(header.Name, "X-RateLimit-Remaining", StringComparison.OrdinalIgnoreCase))
+				remaining = ReadHeaderNumber(header.Value);
+			else if (string.Equals(header.Name, "X-RateLimit-Reset", StringComparison.OrdinalIgnoreCase))
+				reset = ReadHeaderNumber(header.Value);
+		}
+
+		if (limit is null)
+			return null;
+
+		return new RateLimitInfo
+		{
+			Limit = (int)limit.Value,
+			Remaining = (int)(remaining ?? 0),
+			Reset = reset ?? 0
+		};
+	}
+
+	private static long? ReadHeaderNumber(JsonElement value)
+	{
+		switch (value.ValueKind)
+		{
+			case JsonValueKind.Number:
+				return value.TryGetInt64(out var number) ? number : null;
+			case JsonValueKind.String:
+				return long.TryParse(value.GetString(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var parsed)
+					? parsed
+					: null;
+			case JsonValueKind.Array:
+				return value.GetArrayLength() > 0 ? ReadHeaderNumber(value[0]) : null;
+			default:
+				return null;
 		}
 	}
 
