@@ -548,8 +548,8 @@ public sealed class UnityRestSharp : IDisposable
 	/// Run nothing unless every request passes the server's argument validation.
 	/// </param>
 	/// <param name="maxSize">
-	/// The site's batch limit. Leave at WordPress core's default of 25 unless
-	/// the site raises it with the <c>rest_get_max_batch_size</c> filter.
+	/// The site's batch limit. Integrity sets 256; lower this only if the site
+	/// overrides that with the <c>rest_get_max_batch_size</c> filter.
 	/// </param>
 	/// <returns>An empty batch bound to this client.</returns>
 	public IntegrityBatch CreateBatch(bool requireAllValid = false, int maxSize = IntegrityBatch.DefaultMaxSize)
@@ -869,6 +869,14 @@ public sealed class UnityRestSharp : IDisposable
 		}
 	}
 
+	/// <summary>
+	/// Sends queued batch operations to <c>/wp-json/batch/v1</c>. Called by
+	/// <see cref="IntegrityBatch.SendAsync"/>.
+	/// </summary>
+	/// <param name="operations">The queued requests, in order.</param>
+	/// <param name="requireAllValid">Ask core to run nothing unless every request validates.</param>
+	/// <param name="cancellationToken">Cancellation token.</param>
+	/// <returns>The per-request results.</returns>
 	internal async Task<BatchResponse> SendBatchAsync(
 		IReadOnlyList<BatchOperation> operations,
 		bool requireAllValid,

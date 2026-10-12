@@ -26,15 +26,22 @@ namespace TheBleedingDeacons.Unity.Client;
 public sealed class IntegrityBatch
 {
 	/// <summary>
-	/// WordPress core's default batch limit (filter: <c>rest_get_max_batch_size</c>).
+	/// The batch limit the Integrity plugin sets on the site (core's own default
+	/// is 25; Integrity raises it through <c>rest_get_max_batch_size</c>).
 	/// </summary>
-	public const int DefaultMaxSize = 25;
+	public const int DefaultMaxSize = 256;
 
 	private readonly UnityRestSharp _client;
 	private readonly bool _requireAllValid;
 	private readonly int _maxSize;
 	private readonly List<BatchOperation> _operations = [];
 
+	/// <summary>
+	/// Initializes a new instance of the <see cref="IntegrityBatch"/> class.
+	/// </summary>
+	/// <param name="client">The client that sends the batch.</param>
+	/// <param name="requireAllValid">Run nothing unless every request validates.</param>
+	/// <param name="maxSize">The most requests the batch may hold.</param>
 	internal IntegrityBatch(UnityRestSharp client, bool requireAllValid, int maxSize)
 	{
 		ArgumentOutOfRangeException.ThrowIfLessThan(maxSize, 1);

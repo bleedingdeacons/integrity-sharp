@@ -147,8 +147,9 @@ var member = result.Responses[0]?.DataAs<Member>();
 - `CreateBatch(requireAllValid: true)` runs nothing unless every request passes
   the server's validation; `ValidationFailed` is then true and only the failing
   requests carry a response.
-- A batch holds at most 25 requests (core's default); queueing past the limit
-  throws `InvalidOperationException`. Pass `maxSize:` if the site raises it.
+- A batch holds at most 256 requests (the limit Integrity sets on the site);
+  queueing past it throws `InvalidOperationException`. Pass `maxSize:` if the
+  site overrides that limit.
 - Reads (`GET`) can't be batched — WordPress core doesn't allow it.
 
 ## Build & test

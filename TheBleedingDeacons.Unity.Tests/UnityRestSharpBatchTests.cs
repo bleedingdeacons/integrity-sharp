@@ -201,14 +201,14 @@ public class UnityRestSharpBatchTests : IDisposable
 	}
 
 	[Fact]
-	public void CreateBatch_Defaults_To_Core_Limit_Of_25()
+	public void CreateBatch_Defaults_To_The_Plugin_Limit_Of_256()
 	{
 		var batch = _client.CreateBatch();
 
 		for (var i = 0; i < IntegrityBatch.DefaultMaxSize; i++)
 			batch.UnregisterGroup(1, i);
 
-		Assert.Equal(25, batch.Count);
+		Assert.Equal(256, batch.Count);
 		Assert.Throws<InvalidOperationException>(() => batch.UnregisterGroup(1, 99));
 	}
 }
