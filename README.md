@@ -127,7 +127,8 @@ The constructor also accepts an optional `HttpClient` and
 The write calls (member create / update / compliance and the intergroup
 register / unregister calls) can be sent together in one HTTP call through
 WordPress core's `/wp-json/batch/v1`. Requires the Integrity plugin's batch
-support (2.1+).
+support (2.1+); batches of more than 25 requests need 2.2+, which raises core's
+limit to 256.
 
 ```csharp
 var result = await client.CreateBatch()
