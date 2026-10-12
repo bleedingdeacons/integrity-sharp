@@ -65,5 +65,16 @@ namespace TheBleedingDeacons.Unity.Models
 		/// </summary>
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public string? IntergroupPositionRotation { get; init; }
+
+		/// <summary>
+		/// A reference the caller chose for this create, which makes it safe to
+		/// repeat. Generate it once, when the new member is first recorded, and
+		/// send the same value on every attempt: a server that has already
+		/// created a member under it returns that member (HTTP 200) instead of
+		/// creating another. Requires the Integrity plugin 2.3 or later; older
+		/// servers ignore it and create a member on every call.
+		/// </summary>
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+		public Guid? ClientReference { get; init; }
 	}
 }

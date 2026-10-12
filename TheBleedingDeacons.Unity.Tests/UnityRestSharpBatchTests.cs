@@ -83,6 +83,32 @@ public class UnityRestSharpBatchTests : IDisposable
 	}
 
 	[Fact]
+	public async Task SendAsync_Carries_The_Client_Reference_And_Reads_A_Replayed_Create_As_Success()
+	{
+		var reference = Guid.NewGuid();
+		var json = """
+		{"responses":[
+			{"body":{"success":true,"replayed":true,"data":{"id":901,"anonymous_name":"Fay H"}},"status":200,"headers":[]}
+		]}
+		""";
+		_mockHandler.SetupResponse("/wp-json/batch/v1", (HttpStatusCode)207, json);
+
+		var result = await _client.CreateBatch()
+			.CreateMember(new CreateMemberRequest { AnonymousName = "Fay H", ClientReference = reference })
+			.SendAsync();
+
+		var sentBody = await _mockHandler.LastRequest!.Content!.ReadAsStringAsync();
+		using var doc = JsonDocument.Parse(sentBody);
+		var body = doc.RootElement.GetProperty("requests")[0].GetProperty("body");
+		Assert.Equal(reference.ToString(), body.GetProperty("client_reference").GetString());
+
+		// A replay answers 200 rather than 201, with the member made the first time.
+		var created = Assert.Single(result.Responses)!;
+		Assert.True(created.Success);
+		Assert.Equal(901, created.DataAs<Member>()!.Id);
+	}
+
+	[Fact]
 	public async Task SendAsync_Returns_Typed_Data_And_Per_Request_Errors_In_Order()
 	{
 		var json = """
