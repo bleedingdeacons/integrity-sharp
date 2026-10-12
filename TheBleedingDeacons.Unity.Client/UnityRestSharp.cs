@@ -542,7 +542,8 @@ public sealed class UnityRestSharp : IDisposable
 	/// <summary>
 	/// Starts a batch of write requests to send in one HTTP call through
 	/// WordPress core's <c>/wp-json/batch/v1</c>. See <see cref="IntegrityBatch"/>.
-	/// Requires the batch support added in the Integrity plugin's 2.1 release.
+	/// Requires the Integrity plugin's batch support (2.1+); batches of more than
+	/// 25 requests need 2.2+, which raises WordPress core's limit to 256.
 	/// </summary>
 	/// <param name="requireAllValid">
 	/// Run nothing unless every request passes the server's argument validation.
