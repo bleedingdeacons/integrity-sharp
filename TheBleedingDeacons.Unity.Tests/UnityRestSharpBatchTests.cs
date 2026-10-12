@@ -85,14 +85,15 @@ public class UnityRestSharpBatchTests : IDisposable
 	[Fact]
 	public async Task SendAsync_Returns_Typed_Data_And_Per_Request_Errors_In_Order()
 	{
-		_mockHandler.SetupResponse("/wp-json/batch/v1", (HttpStatusCode)207, """
-			{"responses":[
-				{"body":{"success":true,"data":{"id":5,"anonymous_name":"Jane S."}},"status":200,
-				 "headers":{"X-RateLimit-Limit":100,"X-RateLimit-Remaining":98,"X-RateLimit-Reset":1760000000}},
-				{"body":{"code":"insufficient_permissions","message":"This API key does not have permission to access: intergroup-meetings:write","data":{"status":403}},"status":403,"headers":[]},
-				{"body":{"success":false,"error":{"code":"not_found","message":"Officer not registered"}},"status":404,"headers":{"X-RateLimit-Limit":"100","X-RateLimit-Remaining":"97","X-RateLimit-Reset":"1760000000"}}
-			]}
-			""");
+		var json = """
+		{"responses":[
+			{"body":{"success":true,"data":{"id":5,"anonymous_name":"Jane S."}},"status":200,
+			 "headers":{"X-RateLimit-Limit":100,"X-RateLimit-Remaining":98,"X-RateLimit-Reset":1760000000}},
+			{"body":{"code":"insufficient_permissions","message":"This API key does not have permission to access: intergroup-meetings:write","data":{"status":403}},"status":403,"headers":[]},
+			{"body":{"success":false,"error":{"code":"not_found","message":"Officer not registered"}},"status":404,"headers":{"X-RateLimit-Limit":"100","X-RateLimit-Remaining":"97","X-RateLimit-Reset":"1760000000"}}
+		]}
+		""";
+		_mockHandler.SetupResponse("/wp-json/batch/v1", (HttpStatusCode)207, json);
 
 		var result = await _client.CreateBatch()
 			.UpdateMember(5, new UpdateMemberRequest { AnonymousName = "Jane S." })
@@ -127,12 +128,13 @@ public class UnityRestSharpBatchTests : IDisposable
 	[Fact]
 	public async Task SendAsync_Reports_A_Rejected_All_Or_Nothing_Batch()
 	{
-		_mockHandler.SetupResponse("/wp-json/batch/v1", (HttpStatusCode)207, """
-			{"failed":"validation","responses":[
-				null,
-				{"body":{"code":"rest_missing_callback_param","message":"Missing parameter(s): group_id","data":{"status":400}},"status":400,"headers":{}}
-			]}
-			""");
+		var json = """
+		{"failed":"validation","responses":[
+			null,
+			{"body":{"code":"rest_missing_callback_param","message":"Missing parameter(s): group_id","data":{"status":400}},"status":400,"headers":{}}
+		]}
+		""";
+		_mockHandler.SetupResponse("/wp-json/batch/v1", (HttpStatusCode)207, json);
 
 		var result = await _client.CreateBatch(requireAllValid: true)
 			.UnregisterGroup(7, 12)
@@ -148,12 +150,13 @@ public class UnityRestSharpBatchTests : IDisposable
 	[Fact]
 	public async Task SendAsync_Succeeds_Only_When_Every_Request_Succeeds()
 	{
-		_mockHandler.SetupResponse("/wp-json/batch/v1", (HttpStatusCode)207, """
-			{"responses":[
-				{"body":{"success":true,"data":{"intergroup_meeting_id":7,"group_id":12}},"status":200,"headers":{}},
-				{"body":{"success":true,"data":{"intergroup_meeting_id":7,"group_id":13}},"status":200,"headers":{}}
-			]}
-			""");
+		var json = """
+		{"responses":[
+			{"body":{"success":true,"data":{"intergroup_meeting_id":7,"group_id":12}},"status":200,"headers":{}},
+			{"body":{"success":true,"data":{"intergroup_meeting_id":7,"group_id":13}},"status":200,"headers":{}}
+		]}
+		""";
+		_mockHandler.SetupResponse("/wp-json/batch/v1", (HttpStatusCode)207, json);
 
 		var result = await _client.CreateBatch()
 			.UnregisterGroup(7, 12)
