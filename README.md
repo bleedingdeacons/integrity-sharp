@@ -122,6 +122,35 @@ if (groups.Success && groups.Data != null)
 The constructor also accepts an optional `HttpClient` and
 `ILogger<UnityRestSharp>` for custom transport and logging.
 
+### Batching writes
+
+The write calls (member create / update / compliance and the intergroup
+register / unregister calls) can be sent together in one HTTP call through
+WordPress core's `/wp-json/batch/v1`. Requires the Integrity plugin's batch
+support (2.1+).
+
+```csharp
+var result = await client.CreateBatch()
+    .UpdateMember(5, new UpdateMemberRequest { MobileNumber = "07700 900123" })
+    .RegisterGroup(7, groupId: 12, memberId: 0, gsrName: "John D.")
+    .RegisterOfficer(7, officerId: 3, positionName: "Chair", officerName: "Ann B.")
+    .SendAsync(cancellationToken);
+
+foreach (var (index, failed) in result.Failures())
+    Console.WriteLine($"Request {index}: {failed.Error?.Code} — {failed.Error?.Message}");
+
+var member = result.Responses[0]?.DataAs<Member>();
+```
+
+- `Responses` holds one `BatchItemResponse` per request, in queue order, with
+  its own status, error, rate limit and typed `Data`.
+- `CreateBatch(requireAllValid: true)` runs nothing unless every request passes
+  the server's validation; `ValidationFailed` is then true and only the failing
+  requests carry a response.
+- A batch holds at most 25 requests (core's default); queueing past the limit
+  throws `InvalidOperationException`. Pass `maxSize:` if the site raises it.
+- Reads (`GET`) can't be batched — WordPress core doesn't allow it.
+
 ## Build & test
 
 ```bash
