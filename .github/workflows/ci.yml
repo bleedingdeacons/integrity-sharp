@@ -25,12 +25,10 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          # 10.0.x is the SDK everything builds with (the root global.json, and
-          # example/global.json for the example CLI). 9.0.x is for its runtime:
-          # Client/Models/Tests target net9.0, so the test host runs on .NET 9.
-          dotnet-version: |
-            9.0.x
-            10.0.x
+          # The SDK everything builds with (the root global.json, and
+          # example/global.json for the example CLI). Client and Models still
+          # target net9.0, which needs only its targeting pack, not a runtime.
+          dotnet-version: 10.0.x
 
       # coverlet.console is a local tool (.config/dotnet-tools.json); it collects
       # coverage over the Microsoft.Testing.Platform test host below.
@@ -64,12 +62,15 @@ jobs:
       # executable. coverlet.console instruments the library assemblies and runs
       # the test host, producing a Cobertura report. (coverlet's collector /
       # msbuild integrations hook VSTest, which MTP doesn't use — hence the tool.)
-      # The test host is net9.0, so it runs on the 9.0.x runtime installed above.
+      # The test host has to target the SDK's own runtime: coverlet runs as its
+      # build for that runtime and its injected tracker references that
+      # System.Runtime, so a net9.0 host under the .NET 10 SDK fails every
+      # instrumented call with FileNotFoundException. Hence Tests is net10.0.
       - name: Test with coverage
         run: >
-          dotnet coverlet TheBleedingDeacons.Unity.Tests/bin/Debug/net9.0/TheBleedingDeacons.Unity.Tests.dll
+          dotnet coverlet TheBleedingDeacons.Unity.Tests/bin/Debug/net10.0/TheBleedingDeacons.Unity.Tests.dll
           --target dotnet
-          --targetargs "TheBleedingDeacons.Unity.Tests/bin/Debug/net9.0/TheBleedingDeacons.Unity.Tests.dll"
+          --targetargs "TheBleedingDeacons.Unity.Tests/bin/Debug/net10.0/TheBleedingDeacons.Unity.Tests.dll"
           --format cobertura
           --output coverage/coverage.cobertura.xml
           --include "[TheBleedingDeacons.Unity.Client]*"

@@ -17,7 +17,7 @@ be versioned, built and packaged independently of the WordPress plugin.
 | --- | --- | --- |
 | `TheBleedingDeacons.Unity.Client` | net9.0 | The client (`UnityRestSharp`). Packaged as **`Integrity.Client`**. |
 | `TheBleedingDeacons.Unity.Models` | net9.0 | Request/response models (Group, Meeting, Member, GDPR, …). Ships bundled inside `Integrity.Client`. |
-| `TheBleedingDeacons.Unity.Tests`  | net9.0 | xUnit v3 unit tests (Microsoft.Testing.Platform). |
+| `TheBleedingDeacons.Unity.Tests`  | net10.0 | xUnit v3 unit tests (Microsoft.Testing.Platform). |
 | `example/Integrity-cli`           | net10.0 | Runnable example console app. |
 
 ## Installing
