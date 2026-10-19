@@ -160,7 +160,7 @@ var member = result.Responses[0]?.DataAs<Member>();
 dotnet build TheBleedingDeacons.Unity.Client.sln -c Release
 
 # Run the tests
-dotnet test TheBleedingDeacons.Unity.Tests/TheBleedingDeacons.Unity.Tests.csproj
+dotnet test --project TheBleedingDeacons.Unity.Tests/TheBleedingDeacons.Unity.Tests.csproj
 
 # Build & run the example CLI
 dotnet run --project example/Integrity-cli/Integrity-cli.csproj

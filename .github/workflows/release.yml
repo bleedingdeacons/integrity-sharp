@@ -71,8 +71,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          # Same pairing as ci.yml: 9.0.x for the library and tests (root
-          # global.json), 10.0.x for the example CLI (example/global.json).
+          # Same pairing as ci.yml: the 10.0.x SDK builds everything, and the
+          # 9.0.x runtime runs the net9.0 test host.
           dotnet-version: |
             9.0.x
             10.0.x
