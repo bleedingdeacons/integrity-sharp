@@ -60,6 +60,12 @@ internal sealed class MockHttpMessageHandler : HttpMessageHandler
 
 	protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
 	{
+		// Honour a cancelled token as SocketsHttpHandler does, with a cancelled
+		// task (so the caller sees TaskCanceledException). On .NET 9 HttpClient
+		// refused one before reaching the handler; on .NET 10 it gets here.
+		if (cancellationToken.IsCancellationRequested)
+			return Task.FromCanceled<HttpResponseMessage>(cancellationToken);
+
 		_capturedRequests.Add(request);
 
 		var url = request.RequestUri?.ToString() ?? string.Empty;

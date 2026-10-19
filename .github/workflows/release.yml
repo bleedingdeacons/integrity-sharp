@@ -71,11 +71,8 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          # Same pairing as ci.yml: 9.0.x for the library and tests (root
-          # global.json), 10.0.x for the example CLI (example/global.json).
-          dotnet-version: |
-            9.0.x
-            10.0.x
+          # As in ci.yml: the one SDK builds everything, net9.0 included.
+          dotnet-version: 10.0.x
 
       - name: Restore local tools (coverlet.console)
         run: dotnet tool restore
@@ -98,9 +95,9 @@ jobs:
 
       - name: Test
         run: >
-          dotnet coverlet TheBleedingDeacons.Unity.Tests/bin/Debug/net9.0/TheBleedingDeacons.Unity.Tests.dll
+          dotnet coverlet TheBleedingDeacons.Unity.Tests/bin/Debug/net10.0/TheBleedingDeacons.Unity.Tests.dll
           --target dotnet
-          --targetargs "TheBleedingDeacons.Unity.Tests/bin/Debug/net9.0/TheBleedingDeacons.Unity.Tests.dll"
+          --targetargs "TheBleedingDeacons.Unity.Tests/bin/Debug/net10.0/TheBleedingDeacons.Unity.Tests.dll"
           --format cobertura
           --output coverage/coverage.cobertura.xml
           --include "[TheBleedingDeacons.Unity.Client]*"
