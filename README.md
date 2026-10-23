@@ -152,6 +152,29 @@ var member = result.Responses[0]?.DataAs<Member>();
   queueing past it throws `InvalidOperationException`. Pass `maxSize:` if the
   site overrides that limit.
 - Reads (`GET`) can't be batched — WordPress core doesn't allow it.
+- The client retries a whole batch on transient failures, so a batch may run
+  more than once. Updates, compliance records and registrations give the same
+  result when repeated; a create does not, unless it carries a
+  `ClientReference` (below).
+
+### Repeating a create safely
+
+Set `CreateMemberRequest.ClientReference` to a `Guid` generated once, when the
+new member is first recorded, and send the same value on every attempt. A
+server that has already created a member under that reference returns it
+(HTTP 200) instead of creating another, so a retry after a lost response
+can't duplicate the member. If another copy of the same create is still
+running on the server, the call fails with HTTP 409 `create_in_progress`;
+try again shortly. Requires the Integrity plugin 2.3+; older servers ignore the
+field.
+
+```csharp
+var request = new CreateMemberRequest
+{
+    AnonymousName = "Fay H.",
+    ClientReference = member.ClientReference, // stored when the member was entered
+};
+```
 
 ## Build & test
 

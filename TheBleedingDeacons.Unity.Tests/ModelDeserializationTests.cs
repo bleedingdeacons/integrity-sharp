@@ -94,6 +94,18 @@ public class ModelDeserializationTests
 	}
 
 	[Fact]
+	public void CreateMemberRequest_SendsTheClientReferenceAsACanonicalUuid()
+	{
+		var reference = Guid.Parse("3F1C2B4A-9D8E-4C7B-A6F5-0E1D2C3B4A59");
+		var request = new CreateMemberRequest { AnonymousName = "John D", ClientReference = reference };
+
+		var json = JsonSerializer.Serialize(request, Options);
+
+		// The server accepts only the 8-4-4-4-12 form, and stores it lower-case.
+		Assert.Contains("\"client_reference\":\"3f1c2b4a-9d8e-4c7b-a6f5-0e1d2c3b4a59\"", json, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateMemberRequest_SerializesOnlyPopulatedOptionalFields()
 	{
 		var request = new CreateMemberRequest
@@ -112,6 +124,7 @@ public class ModelDeserializationTests
 		Assert.Contains("\"is_gsr\":true", json, StringComparison.Ordinal);
 
 		// Null optionals are omitted (JsonIgnoreCondition.WhenWritingNull).
+		Assert.DoesNotContain("client_reference", json, StringComparison.Ordinal);
 		Assert.DoesNotContain("mobile_number", json, StringComparison.Ordinal);
 		Assert.DoesNotContain("intergroup_position_id", json, StringComparison.Ordinal);
 	}
